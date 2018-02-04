@@ -1,11 +1,15 @@
 use std;
 use std::cmp::min;
 
+#[cfg(test)]
+mod cities_tests;
+
 extern crate rand;
 
 use self::rand::Rng;
 
 use utils::uset::USet;
+use std::collections::HashSet;
 
 /// Calculates a vector where indexes are the distances from the capital and the values are
 /// the number of cities with the given distance.
@@ -219,24 +223,39 @@ pub fn gen_cities_uset(size: usize, max_roads_per_distance: usize) -> Vec<usize>
     city_array
 }
 
-#[cfg(test)]
-mod cities_tests {
-    use super::*;
+/// Generates a city map.
+///
+/// Same as `gen_cities_uset` but uses `std::collections::HashSet` instead of `USet`.
+/// Implemented for performance comparison.
+pub fn gen_cities_hashset(size: usize, max_roads_per_distance: usize) -> Vec<usize> {
+    let mut city_vec = Vec::with_capacity(size);
+    let mut r = rand::thread_rng();
 
-    use spectral::prelude::*;
+    let all_cities: HashSet<usize> = (0..size).into_iter().collect();
 
-    #[test]
-    fn should_generate_unsorted_array() {
-        let v = gen_unshuffled(20, 3, 0.0, 3);
-        assert_that!(v).has_length(20);
-        assert_that!(v[0]).is_equal_to(0);
-        assert_that(v.iter().max().unwrap()).is_less_than(20);
+    let capital = r.gen_range(0, size);
+    city_vec.push((capital, capital));
+
+    while city_vec.len() < size {
+        let (city, ..) = city_vec[city_vec.len() - 1];
+        let high = min(max_roads_per_distance, size - city_vec.len());
+        let new_cities = r.gen_range(0, high) + 1;
+
+        let used_cities: HashSet<usize> = city_vec.iter().map(|&(x, _)| x).collect();
+        let mut free_cities = &all_cities - &used_cities;
+        let max_cities = min(new_cities, free_cities.len());
+
+        for _i in 0..max_cities {
+            let remove_index = r.gen_range(0, free_cities.len());
+            let &new_city = free_cities.iter().nth(remove_index).unwrap();
+            free_cities.remove(&new_city);
+            city_vec.push((new_city, city));
+        }
     }
 
-    #[test]
-    fn should_generate_city_array() {
-        let v = gen_cities(20, 3, 0.0, 3);
-        assert_that!(v).has_length(20);
-        assert_that(v.iter().max().unwrap()).is_less_than(20);
-    }
+    let mut city_array = vec![0; size];
+    city_vec
+        .iter()
+        .for_each(|&(from, to)| city_array[from] = to);
+    city_array
 }

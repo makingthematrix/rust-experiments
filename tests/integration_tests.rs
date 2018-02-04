@@ -17,3 +17,10 @@ fn generate_and_solve_uset() {
     let result = find_city_distances(&map);
     println!("{:?}", result);
 }
+
+#[test]
+fn generate_and_solve_hashset() {
+    let map = gen_cities_hashset(1000, 25);
+    let result = find_city_distances(&map);
+    println!("{:?}", result);
+}

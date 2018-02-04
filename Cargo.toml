@@ -9,3 +9,8 @@ rand = "0.3"
 [dev-dependencies]
 quickcheck = "0.6.0"
 spectral = "0.6.0"
+criterion = "0.1.2"
+
+[[bench]]
+name = "criterion_tests"
+harness = false
