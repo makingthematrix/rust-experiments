@@ -11,6 +11,8 @@ use self::rand::Rng;
 use utils::uset::USet;
 use std::collections::HashSet;
 
+use im::HashSet as ImSet;
+
 /// Calculates a vector where indexes are the distances from the capital and the values are
 /// the number of cities with the given distance.
 ///
@@ -249,6 +251,39 @@ pub fn gen_cities_hashset(size: usize, max_roads_per_distance: usize) -> Vec<usi
             let remove_index = r.gen_range(0, free_cities.len());
             let &new_city = free_cities.iter().nth(remove_index).unwrap();
             free_cities.remove(&new_city);
+            city_vec.push((new_city, city));
+        }
+    }
+
+    let mut city_array = vec![0; size];
+    city_vec
+        .iter()
+        .for_each(|&(from, to)| city_array[from] = to);
+    city_array
+}
+
+pub fn gen_cities_imset(size: usize, max_roads_per_distance: usize) -> Vec<usize> {
+    let mut city_vec = Vec::with_capacity(size);
+    let mut r = rand::thread_rng();
+
+    let all_cities: ImSet<usize> = (0..size).into_iter().collect();
+
+    let capital = r.gen_range(0, size);
+    city_vec.push((capital, capital));
+
+    while city_vec.len() < size {
+        let (city, ..) = city_vec[city_vec.len() - 1];
+        let high = min(max_roads_per_distance, size - city_vec.len());
+        let new_cities = r.gen_range(0, high) + 1;
+
+        let used_cities: ImSet<usize> = city_vec.iter().map(|&(x, _)| x).collect();
+        let mut free_cities = all_cities.difference(used_cities);
+        let max_cities = min(new_cities, free_cities.len());
+
+        for _i in 0..max_cities {
+            let remove_index = r.gen_range(0, free_cities.len());
+            let &new_city = free_cities.iter().nth(remove_index).unwrap().as_ref();
+            free_cities.remove_mut(&new_city);
             city_vec.push((new_city, city));
         }
     }

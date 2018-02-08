@@ -19,6 +19,12 @@ fn gen_hashset(c: &mut Criterion) {
     });
 }
 
+fn gen_imset(c: &mut Criterion) {
+    c.bench_function("ImSet generate map 1000", |b| {
+        b.iter({ || gen_cities_imset(1000, 50) })
+    });
+}
+
 fn gen_standard(c: &mut Criterion) {
     c.bench_function("Standard generate map 1000", |b| {
         b.iter({ || gen_cities(1000, 5, 0.2, 15) })
@@ -32,5 +38,5 @@ fn solve_uset(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, gen_uset, gen_hashset, gen_standard, solve_uset);
+criterion_group!(benches, gen_uset, gen_hashset, gen_imset, gen_standard, solve_uset);
 criterion_main!(benches);
