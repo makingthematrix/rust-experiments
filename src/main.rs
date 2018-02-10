@@ -8,12 +8,29 @@ extern crate quickcheck;
 #[macro_use]
 extern crate spectral;
 
-extern crate im;
+extern crate flexi_logger;
+#[macro_use]
+extern crate log;
 
 pub mod cities;
 pub mod utils;
 
+use flexi_logger::*;
+
 fn main() {
+    let mut b = LogSpecBuilder::new();
+    b.default(log::LevelFilter::Info);
+    let spec = b.finalize();
+    Logger::with(spec)
+        .log_to_file()
+        .directory("log")
+        .print_message()
+        .duplicate_error()
+        .duplicate_info()
+        .format(flexi_logger::detailed_format)
+        .start()
+        .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
+
     let size = match env::args().nth(1) {
         Some(s) => s.parse::<usize>().unwrap(),
         None => 25_000,
@@ -34,8 +51,15 @@ fn main() {
         None => 25,
     };
 
+    info!("Cities standard generator chosen with options: size={}, max_broad={}, knots_occurence={}, knots_max_broad={}",
+          size, max_broad, knots_occurence, knots_max_broad
+    );
+
     let city_array = cities::gen_cities(size, max_broad, knots_occurence, knots_max_broad);
+
+    info!("Map generated");
+
     let result = cities::find_city_distances(&city_array);
 
-    println!("{:?}", result);
+    info!("Map solved: {:?}", result);
 }

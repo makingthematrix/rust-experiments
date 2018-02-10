@@ -6,7 +6,7 @@ extern crate quickcheck;
 #[macro_use]
 extern crate spectral;
 
-extern crate im;
+extern crate log;
 
 pub mod cities;
 pub mod utils;
