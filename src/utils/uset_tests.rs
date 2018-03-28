@@ -87,4 +87,9 @@ mod uset_tests {
         }
     }
 
+    #[test]
+    fn should_be_equal() {
+        let _s1 = uset![0, 3, 8, 10];
+    }
+
 }

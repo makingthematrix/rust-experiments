@@ -9,4 +9,5 @@ extern crate spectral;
 extern crate log;
 
 pub mod cities;
+#[macro_use]
 pub mod utils;

@@ -1,16 +1,27 @@
+#![macro_use]
+
 use std::ops::Range;
 
-extern crate rand;
-use self::rand::{Rng, ThreadRng};
+macro_rules! uset {
+    ($($x:expr),*) => (USet::from_vec(&vec![$($x),*]))
+}
 
-#[derive(Debug)]
+#[derive(Debug, Default)]
 pub struct USet {
     set: Vec<bool>,
     len: usize,
 }
 
 impl USet {
-    pub fn new(size: usize) -> USet {
+    pub fn default() -> USet {
+        USet::new()
+    }
+
+    pub fn new() -> USet {
+        USet::with_capacity(0)
+    }
+
+    pub fn with_capacity(size: usize) -> USet {
         USet {
             set: vec![false; size],
             len: 0,
@@ -19,21 +30,21 @@ impl USet {
 
     pub fn from_vec(vec: &[usize]) -> USet {
         let &mx = vec.iter().max().unwrap_or(&0);
-        let mut s = vec![false; mx + 1];
-        vec.iter().for_each(|&i| s[i] = true);
+        let mut set = vec![false; mx + 1];
+        vec.iter().for_each(|&i| set[i] = true);
         USet {
-            set: s,
+            set,
             len: vec.len(),
         }
     }
 
     pub fn from_range(r: Range<usize>) -> USet {
-        let mut s = vec![false; r.end];
+        let mut set = vec![false; r.end];
         let len = r.len();
         for i in r {
-            s[i] = true;
+            set[i] = true;
         }
-        USet { set: s, len: len }
+        USet { set, len }
     }
 
     pub fn len(&self) -> usize {
@@ -62,15 +73,6 @@ impl USet {
         if el < self.set.len() && self.set[el] {
             self.set[el] = false;
             self.len -= 1
-        }
-    }
-
-    pub fn pop_random(&mut self, rnd: &mut ThreadRng) -> Option<usize> {
-        if self.len > 0 {
-            let index = rnd.gen_range(0, self.len);
-            self.pop(index)
-        } else {
-            None
         }
     }
 

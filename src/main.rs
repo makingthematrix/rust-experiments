@@ -13,6 +13,7 @@ extern crate flexi_logger;
 extern crate log;
 
 pub mod cities;
+#[macro_use]
 pub mod utils;
 
 use flexi_logger::*;

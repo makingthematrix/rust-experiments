@@ -6,7 +6,7 @@ mod cities_tests;
 
 extern crate rand;
 
-use self::rand::Rng;
+use self::rand::{Rng, ThreadRng};
 
 use utils::uset::USet;
 use std::collections::HashSet;
@@ -211,7 +211,7 @@ pub fn gen_cities_uset(size: usize, max_roads_per_distance: usize) -> Vec<usize>
         let max_cities = min(new_cities, free_cities.len());
 
         for _i in 0..max_cities {
-            let new_city = free_cities.pop_random(&mut r).unwrap();
+            let new_city = pop_random(&mut free_cities, &mut r).unwrap();
             city_vec.push((new_city, city));
         }
     }
@@ -221,6 +221,15 @@ pub fn gen_cities_uset(size: usize, max_roads_per_distance: usize) -> Vec<usize>
         .iter()
         .for_each(|&(from, to)| city_array[from] = to);
     city_array
+}
+
+fn pop_random(set: &mut USet, rnd: &mut ThreadRng) -> Option<usize> {
+    if !set.is_empty() {
+        let index = rnd.gen_range(0, set.len());
+        set.pop(index)
+    } else {
+        None
+    }
 }
 
 /// Generates a city map.
