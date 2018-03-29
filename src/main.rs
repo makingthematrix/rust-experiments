@@ -12,6 +12,8 @@ extern crate flexi_logger;
 #[macro_use]
 extern crate log;
 
+extern crate itertools;
+
 pub mod cities;
 #[macro_use]
 pub mod utils;

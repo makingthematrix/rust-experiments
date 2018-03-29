@@ -1,5 +1,6 @@
 #![macro_use]
 
+use itertools::Itertools;
 use std::ops::Range;
 
 macro_rules! uset {
@@ -101,7 +102,15 @@ impl USet {
         }
     }
 
-    pub fn substract(&self, other: &USet) -> USet {
+    pub fn min(&self) -> Option<usize> {
+        self.set.iter().find_position(|&b| *b).map(|(i, ..)| i)
+    }
+
+    pub fn max(&self) -> Option<usize> {
+        self.set.iter().rev().find_position(|&b| *b).map(|(i, ..)| self.set.len() - i - 1)
+    }
+
+    pub fn sub_set(&self, other: &USet) -> USet {
         let mut s = self.set.clone();
         let mut size = self.len();
         other
@@ -132,12 +141,21 @@ impl USet {
     }
 }
 
+impl PartialEq for USet {
+    fn eq(&self, other: &USet) -> bool {
+        self.len == other.len && self.set == other.set
+    }
+}
+
+impl Eq for USet {}
+
+
 use std::ops::Sub;
 
 impl<'a> Sub for &'a USet {
     type Output = USet;
     fn sub(self, other: &USet) -> USet {
-        self.substract(other)
+        self.sub_set(other)
     }
 }
 

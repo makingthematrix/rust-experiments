@@ -6,6 +6,8 @@ extern crate quickcheck;
 #[macro_use]
 extern crate spectral;
 
+extern crate itertools;
+
 extern crate log;
 
 pub mod cities;

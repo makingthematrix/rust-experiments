@@ -66,13 +66,13 @@ mod uset_tests {
         let s1 = USet::from_vec(&[0, 3, 8, 10]);
         let s2 = USet::from_vec(&[3, 8]);
 
-        let s3 = s1.substract(&s2);
+        let s3 = s1.sub_set(&s2);
 
         assert_that(&(s3.len())).is_equal_to(&2);
         assert_that(&(s3.contains(0))).is_true();
         assert_that(&(s3.contains(10))).is_true();
 
-        let s4 = s1.substract(&s2);
+        let s4 = s1.sub_set(&s2);
 
         assert_that(&(s4.len())).is_equal_to(&2);
         assert_that(&(s4.contains(0))).is_true();
@@ -89,7 +89,38 @@ mod uset_tests {
 
     #[test]
     fn should_be_equal() {
-        let _s1 = uset![0, 3, 8, 10];
+        let s1 = uset![0, 3, 8, 10];
+        let s2 = uset![0, 3, 8, 10];
+        assert_that(&s1).is_equal_to(&s2);
+        assert_that(&(s1 == s2)).is_true();
+    }
+
+    #[test]
+    fn should_find_min() {
+        let s1 = uset![0, 3, 8, 10];
+        assert_that(&(s1.min())).is_equal_to(&Some(0));
+        let s2 = uset![3, 8, 10];
+        assert_that(&(s2.min())).is_equal_to(&Some(3));
+        let s3 = USet::new();
+        assert_that(&(s3.min())).is_equal_to(&None);
+
+        // TODO: find min after adding a new element, smaller than the previous min
+
+        // TODO: find min after removing the previous min
+    }
+
+    #[test]
+    fn should_find_max() {
+        let s1 = uset![0, 3, 8, 10];
+        assert_that(&(s1.max())).is_equal_to(&Some(10));
+        let s2 = uset![0];
+        assert_that(&(s2.max())).is_equal_to(&Some(0));
+        let s3 = USet::new();
+        assert_that(&(s3.max())).is_equal_to(&None);
+
+        // TODO: find max after adding a new element, bigger than the previous max
+
+        // TODO: find max after removing the previous max
     }
 
 }
