@@ -13,6 +13,11 @@ pub struct USet {
     len: usize,
 }
 
+pub struct USetIter<'a> {
+    uset: &'a USet,
+    index: usize,
+}
+
 impl USet {
     pub fn default() -> USet {
         USet::new()
@@ -107,7 +112,11 @@ impl USet {
     }
 
     pub fn max(&self) -> Option<usize> {
-        self.set.iter().rev().find_position(|&b| *b).map(|(i, ..)| self.set.len() - i - 1)
+        self.set
+            .iter()
+            .rev()
+            .find_position(|&b| *b)
+            .map(|(i, ..)| self.set.len() - i - 1)
     }
 
     pub fn sub_set(&self, other: &USet) -> USet {
@@ -128,6 +137,10 @@ impl USet {
         USet { set: s, len: size }
     }
 
+    pub fn iter<'a>(&'a self) -> USetIter<'a> {
+        USetIter { uset: &self, index: 0 }
+    }
+
     pub fn to_vec(&self) -> Vec<usize> {
         self.set
             .iter()
@@ -141,6 +154,20 @@ impl USet {
     }
 }
 
+impl <'a> Iterator for USetIter<'a> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        while self.index < self.uset.len {
+            self.index += 1;
+            if self.uset.set[self.index] {
+                return Some(self.index)
+            }
+        }
+        None
+    }
+}
+
 impl PartialEq for USet {
     fn eq(&self, other: &USet) -> bool {
         self.len == other.len && self.set == other.set
@@ -148,7 +175,6 @@ impl PartialEq for USet {
 }
 
 impl Eq for USet {}
-
 
 use std::ops::Sub;
 
