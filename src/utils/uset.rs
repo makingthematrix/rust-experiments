@@ -1,13 +1,16 @@
 #![macro_use]
 
-use itertools::Itertools;
 use std::ops::Range;
+use std::cmp::{max, min};
 
+use std::ops::{Add, Sub};
+
+#[allow(unused_macros)]
 macro_rules! uset {
     ($($x:expr),*) => (USet::from_vec(&vec![$($x),*]))
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Default, Clone)]
 pub struct USet {
     set: Vec<bool>,
     len: usize,
@@ -16,6 +19,37 @@ pub struct USet {
 pub struct USetIter<'a> {
     uset: &'a USet,
     index: usize,
+    rindex: usize,
+}
+
+impl<'a> Iterator for USetIter<'a> {
+    type Item = usize;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let max = self.uset.set.len() - self.rindex;
+        while self.index < max {
+            let index = self.index;
+            self.index += 1;
+            if self.uset.set[index] {
+                return Some(index);
+            }
+        }
+        None
+    }
+}
+
+impl<'a> DoubleEndedIterator for USetIter<'a> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let len = self.uset.set.len();
+        while self.rindex < len - self.index {
+            let index = len - self.rindex - 1;
+            self.rindex += 1;
+            if self.uset.set[index] {
+                return Some(index);
+            }
+        }
+        None
+    }
 }
 
 impl USet {
@@ -32,25 +66,6 @@ impl USet {
             set: vec![false; size],
             len: 0,
         }
-    }
-
-    pub fn from_vec(vec: &[usize]) -> USet {
-        let &mx = vec.iter().max().unwrap_or(&0);
-        let mut set = vec![false; mx + 1];
-        vec.iter().for_each(|&i| set[i] = true);
-        USet {
-            set,
-            len: vec.len(),
-        }
-    }
-
-    pub fn from_range(r: Range<usize>) -> USet {
-        let mut set = vec![false; r.end];
-        let len = r.len();
-        for i in r {
-            set[i] = true;
-        }
-        USet { set, len }
     }
 
     pub fn len(&self) -> usize {
@@ -83,43 +98,91 @@ impl USet {
     }
 
     pub fn pop(&mut self, index: usize) -> Option<usize> {
-        let d = self.find(index);
+        let d = self.find_by_index(index);
         if !d.is_none() {
             self.remove(d.unwrap());
         }
         d
     }
 
-    pub fn find(&self, index: usize) -> Option<usize> {
-        if index < self.len {
-            let mut c = index;
-            for (i, &b) in self.set.iter().enumerate() {
-                if b {
-                    if c == 0 {
-                        return Some(i);
-                    }
-                    c -= 1;
-                }
-            }
-            None
-        } else {
-            None
+    pub fn iter(&self) -> USetIter {
+        USetIter {
+            uset: self,
+            index: 0,
+            rindex: 0,
         }
     }
 
-    pub fn min(&self) -> Option<usize> {
-        self.set.iter().find_position(|&b| *b).map(|(i, ..)| i)
+    #[inline]
+    pub fn contains(&self, value: usize) -> bool {
+        value < self.set.len() && self.set[value]
     }
 
-    pub fn max(&self) -> Option<usize> {
-        self.set
-            .iter()
-            .rev()
-            .find_position(|&b| *b)
-            .map(|(i, ..)| self.set.len() - i - 1)
+    fn find_by_index(&self, index: usize) -> Option<usize> {
+        let mut it = self.iter();
+        for _i in 0..index {
+            it.next();
+        }
+        it.next()
     }
 
-    pub fn sub_set(&self, other: &USet) -> USet {
+    #[inline]
+    fn min(&self) -> Option<usize> {
+        self.iter().next()
+    }
+
+    #[inline]
+    fn max(&self) -> Option<usize> {
+        self.iter().rev().next()
+    }
+
+    pub fn from_vec(vec: &[usize]) -> USet {
+        let &mx = vec.iter().max().unwrap_or(&0);
+        let mut set = vec![false; mx + 1];
+        vec.iter().for_each(|&i| set[i] = true);
+        USet {
+            set,
+            len: vec.len(),
+        }
+    }
+
+    pub fn from_range(r: Range<usize>) -> USet {
+        let mut set = vec![false; r.end];
+        let len = r.len();
+        for i in r {
+            set[i] = true;
+        }
+        USet { set, len }
+    }
+
+    fn add_set(&self, other: &USet) -> USet {
+        if self.is_empty() {
+            other.clone()
+        } else if other.is_empty() {
+            self.clone()
+        } else {
+            let min: usize = min(self.min().unwrap(), other.min().unwrap());
+            let max: usize = max(self.max().unwrap(), other.max().unwrap());
+
+            let mut set = vec![false; max + 1];
+            let mut len = 0usize;
+
+            // TODO: is it possible to simply create the vec from the range?
+            set.iter_mut()
+                .enumerate()
+                .skip(min)
+                .take(max + 1)
+                .for_each(|(i, value)| {
+                    if self.contains(i) || other.contains(i) {
+                        *value = true;
+                        len += 1;
+                    }
+                });
+            USet { set, len }
+        }
+    }
+
+    fn sub_set(&self, other: &USet) -> USet {
         let mut s = self.set.clone();
         let mut size = self.len();
         other
@@ -136,36 +199,6 @@ impl USet {
 
         USet { set: s, len: size }
     }
-
-    pub fn iter<'a>(&'a self) -> USetIter<'a> {
-        USetIter { uset: &self, index: 0 }
-    }
-
-    pub fn to_vec(&self) -> Vec<usize> {
-        self.set
-            .iter()
-            .enumerate()
-            .filter_map(|(i, &b)| if b { Some(i) } else { None })
-            .collect()
-    }
-
-    pub fn contains(&self, value: usize) -> bool {
-        self.set[value]
-    }
-}
-
-impl <'a> Iterator for USetIter<'a> {
-    type Item = usize;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while self.index < self.uset.len {
-            self.index += 1;
-            if self.uset.set[self.index] {
-                return Some(self.index)
-            }
-        }
-        None
-    }
 }
 
 impl PartialEq for USet {
@@ -176,7 +209,12 @@ impl PartialEq for USet {
 
 impl Eq for USet {}
 
-use std::ops::Sub;
+impl<'a> Add for &'a USet {
+    type Output = USet;
+    fn add(self, other: &USet) -> USet {
+        self.add_set(other)
+    }
+}
 
 impl<'a> Sub for &'a USet {
     type Output = USet;
@@ -194,6 +232,12 @@ impl<'a> From<&'a [usize]> for USet {
 impl From<Vec<usize>> for USet {
     fn from(vec: Vec<usize>) -> Self {
         USet::from_vec(&vec)
+    }
+}
+
+impl Into<Vec<usize>> for USet {
+    fn into(self) -> Vec<usize> {
+        self.iter().collect()
     }
 }
 

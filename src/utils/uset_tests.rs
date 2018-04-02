@@ -10,7 +10,7 @@ mod uset_tests {
     #[test]
     fn set_from_and_to_vec() {
         let v = vec![0, 3, 8, 10];
-        let s: USet = USet::from_vec(&v);
+        let s: USet = USet::from(&v);
 
         assert_that(&(s.len()))
             .named(&"USet length")
@@ -25,7 +25,7 @@ mod uset_tests {
         assert_that(&(s.contains(10))).is_true();
         assert_that(&(s.contains(9))).is_false();
 
-        let v2 = s.to_vec();
+        let v2: Vec<usize> = s.into();
 
         assert_that!(&v2).is_equal_to(&v);
     }
@@ -56,23 +56,23 @@ mod uset_tests {
                 return TestResult::discard()
             }
 
-            let result = USet::from_vec(&unique_v).to_vec();
+            let result: Vec<usize> = USet::from(&unique_v).iter().collect();
             TestResult::from_bool(vec_compare(&unique_v, &result))
         }
     }
 
     #[test]
     fn should_substract() {
-        let s1 = USet::from_vec(&[0, 3, 8, 10]);
-        let s2 = USet::from_vec(&[3, 8]);
+        let s1 = uset![0, 3, 8, 10];
+        let s2 = uset![3, 8];
 
-        let s3 = s1.sub_set(&s2);
+        let s3 = &s1 - &s2;
 
         assert_that(&(s3.len())).is_equal_to(&2);
         assert_that(&(s3.contains(0))).is_true();
         assert_that(&(s3.contains(10))).is_true();
 
-        let s4 = s1.sub_set(&s2);
+        let s4 = &s1 - &s2;
 
         assert_that(&(s4.len())).is_equal_to(&2);
         assert_that(&(s4.contains(0))).is_true();
@@ -98,11 +98,26 @@ mod uset_tests {
     #[test]
     fn should_find_min() {
         let s1 = uset![0, 3, 8, 10];
-        assert_that(&(s1.min())).is_equal_to(&Some(0));
+        assert_that(&(s1.iter().next())).is_equal_to(&Some(0));
         let s2 = uset![3, 8, 10];
-        assert_that(&(s2.min())).is_equal_to(&Some(3));
+        assert_that(&(s2.iter().next())).is_equal_to(&Some(3));
         let s3 = USet::new();
-        assert_that(&(s3.min())).is_equal_to(&None);
+        let mut s3iter = s3.iter();
+        assert_that(&(s3iter.next())).is_equal_to(&None);
+        assert_that(&(s3iter.next())).is_equal_to(&None);
+
+        let mut s2iter = s2.iter();
+        assert_that!(s2iter.next()).is_equal_to(Some(3));
+        assert_that!(s2iter.next()).is_equal_to(Some(8));
+        assert_that!(s2iter.next()).is_equal_to(Some(10));
+        assert_that!(s2iter.next()).is_equal_to(None);
+        assert_that!(s2iter.next()).is_equal_to(None);
+
+        let s4 = uset![0];
+        let mut s4iter = s4.iter();
+        assert_that!(s4iter.next()).is_equal_to(Some(0));
+        assert_that!(s4iter.next()).is_equal_to(None);
+        assert_that!(s4iter.next()).is_equal_to(None);
 
         // TODO: find min after adding a new element, smaller than the previous min
 
@@ -112,15 +127,35 @@ mod uset_tests {
     #[test]
     fn should_find_max() {
         let s1 = uset![0, 3, 8, 10];
-        assert_that(&(s1.max())).is_equal_to(&Some(10));
+        assert_that!(s1.iter().rev().next()).is_equal_to(Some(10));
         let s2 = uset![0];
-        assert_that(&(s2.max())).is_equal_to(&Some(0));
+        assert_that!(s2.iter().rev().next()).is_equal_to(Some(0));
         let s3 = USet::new();
-        assert_that(&(s3.max())).is_equal_to(&None);
+        let mut s3iter = s3.iter().rev();
+        assert_that!(s3iter.next()).is_equal_to(None);
+        assert_that!(s3iter.next()).is_equal_to(None);
+
+        let mut s2iter = s2.iter().rev();
+        assert_that!(s2iter.next()).is_equal_to(Some(0));
+        assert_that!(s2iter.next()).is_equal_to(None);
+        assert_that!(s2iter.next()).is_equal_to(None);
 
         // TODO: find max after adding a new element, bigger than the previous max
 
         // TODO: find max after removing the previous max
     }
 
+    #[test]
+    fn should_add() {
+        let s1 = uset![0, 3, 8, 10];
+        let s2 = uset![1, 4];
+        let s3 = uset![3, 5];
+        let s4 = USet::new();
+
+        assert_that!((&s1 + &s2)).is_equal_to(uset![0, 1, 3, 4, 8, 10]);
+        assert_that!((&s1 + &s3)).is_equal_to(uset![0, 3, 5, 8, 10]);
+        assert_that!((&s1 + &s4)).is_equal_to(s1.clone());
+        assert_that!((&s1 + &s1)).is_equal_to(s1.clone());
+        assert_that!((&s4 + &s4)).is_equal_to(s4.clone());
+    }
 }
