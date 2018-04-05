@@ -3,7 +3,7 @@
 use std::ops::Range;
 use std::cmp::{max, min};
 
-use std::ops::{Add, Sub};
+use std::ops::{Add, BitXor, Mul, Sub};
 
 #[allow(unused_macros)]
 macro_rules! uset {
@@ -167,43 +167,95 @@ impl USet {
             let mut set = vec![false; max + 1];
             let mut len = 0usize;
 
-            // TODO: is it possible to simply create the vec from the range?
             set.iter_mut()
                 .enumerate()
                 .skip(min)
-                .take(max + 1)
+                .take(max - min + 1)
                 .for_each(|(i, value)| {
                     if self.contains(i) || other.contains(i) {
                         *value = true;
                         len += 1;
                     }
                 });
-            USet { set, len }
+
+            if len == 0 {
+                USet::new()
+            } else {
+                USet { set, len }
+            }
         }
     }
 
     fn sub_set(&self, other: &USet) -> USet {
-        let mut s = self.set.clone();
-        let mut size = self.len();
+        let mut set = self.set.clone();
+        let mut len = self.len();
+
         other
             .set
             .iter()
-            .take(s.len())
+            .take(set.len())
             .enumerate()
             .for_each(|(i, &v)| {
-                if v && s[i] {
-                    s[i] = false;
-                    size -= 1;
+                if v && set[i] {
+                    set[i] = false;
+                    len -= 1;
                 }
             });
 
-        USet { set: s, len: size }
+        if len == 0 {
+            USet::new()
+        } else {
+            USet { set, len }
+        }
+    }
+
+    fn mul_set(&self, other: &USet) -> USet {
+        let total_len: usize = min(self.capacity(), other.capacity());
+        let mn = (0..total_len).find(|&i| self.contains(i) && other.contains(i));
+        if mn.is_none() {
+            USet::new()
+        } else {
+            let min = mn.unwrap();
+            let mx = (0..(total_len - min + 1))
+                .find(|&i| self.contains(total_len - i) && other.contains(total_len - i));
+            let max = total_len - mx.unwrap();
+            debug_assert!(max >= min);
+
+            let mut set = vec![false; max + 1];
+            let mut len = 0usize;
+
+            set.iter_mut()
+                .enumerate()
+                .skip(min)
+                .take(max - min + 1)
+                .for_each(|(i, value)| {
+                    if self.contains(i) && other.contains(i) {
+                        *value = true;
+                        len += 1;
+                    }
+                });
+
+            if len == 0 {
+                USet::new()
+            } else {
+                USet { set, len }
+            }
+        }
+    }
+
+    fn xor_set(&self, other: &USet) -> USet {
+        &(self + other) - &(self * other)
     }
 }
 
 impl PartialEq for USet {
     fn eq(&self, other: &USet) -> bool {
-        self.len == other.len && self.set == other.set
+        self.len == other.len
+            && self.set
+                .iter()
+                .zip(other.set.iter())
+                .find(|&(&a, &b)| a != b)
+                .is_none()
     }
 }
 
@@ -220,6 +272,20 @@ impl<'a> Sub for &'a USet {
     type Output = USet;
     fn sub(self, other: &USet) -> USet {
         self.sub_set(other)
+    }
+}
+
+impl<'a> Mul for &'a USet {
+    type Output = USet;
+    fn mul(self, other: &USet) -> USet {
+        self.mul_set(other)
+    }
+}
+
+impl<'a> BitXor for &'a USet {
+    type Output = USet;
+    fn bitxor(self, other: &USet) -> USet {
+        self.xor_set(other)
     }
 }
 

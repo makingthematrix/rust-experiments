@@ -65,6 +65,7 @@ mod uset_tests {
     fn should_substract() {
         let s1 = uset![0, 3, 8, 10];
         let s2 = uset![3, 8];
+        let s5 = USet::new();
 
         let s3 = &s1 - &s2;
 
@@ -77,6 +78,9 @@ mod uset_tests {
         assert_that(&(s4.len())).is_equal_to(&2);
         assert_that(&(s4.contains(0))).is_true();
         assert_that(&(s4.contains(10))).is_true();
+
+        assert_that!((&s1 - &s5)).is_equal_to(s1.clone());
+        assert_that!((&s5 - &s5)).is_equal_to(USet::new());
     }
 
     #[test]
@@ -157,5 +161,48 @@ mod uset_tests {
         assert_that!((&s1 + &s4)).is_equal_to(s1.clone());
         assert_that!((&s1 + &s1)).is_equal_to(s1.clone());
         assert_that!((&s4 + &s4)).is_equal_to(s4.clone());
+    }
+
+    #[test]
+    fn should_mul() {
+        let s1 = uset![0, 3, 8, 10];
+        let s2 = uset![3, 8];
+        assert_that!((&s1 * &s2)).is_equal_to(uset![3, 8]);
+
+        let s3 = uset![1, 2, 3];
+        assert_that!((&s1 * &s3)).is_equal_to(uset![3]);
+
+        let s4 = USet::new();
+        assert_that!((&s1 * &s4)).is_equal_to(USet::new());
+
+        assert_that!((&s1 * &s1)).is_equal_to(s1.clone());
+
+        let s5 = uset![2, 4, 6];
+        assert_that!((&s1 * &s5)).is_equal_to(USet::new());
+
+        let s6 = uset![10];
+        assert_that!((&s1 * &s6)).is_equal_to(s6.clone());
+    }
+
+    #[test]
+    fn should_xor() {
+        let s1 = uset![0, 3, 8, 10];
+
+        let s2 = uset![3, 8];
+        assert_that!((&s1 ^ &s2)).is_equal_to(uset![0, 10]);
+
+        let s3 = uset![1, 2, 3];
+        assert_that!((&s1 ^ &s3)).is_equal_to(uset![0, 1, 2, 8, 10]);
+
+        let s4 = USet::new();
+        assert_that!((&s1 ^ &s4)).is_equal_to(s1.clone());
+
+        assert_that!((&s1 ^ &s1)).is_equal_to(USet::new());
+
+        let s5 = uset![2, 4, 6];
+        assert_that!((&s1 ^ &s5)).is_equal_to(uset![0, 2, 3, 4, 6, 8, 10]);
+
+        let s6 = uset![10];
+        assert_that!((&s1 ^ &s6)).is_equal_to(uset![0, 3, 8]);
     }
 }
