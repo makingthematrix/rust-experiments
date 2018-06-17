@@ -18,6 +18,10 @@ pub mod cities;
 #[macro_use]
 pub mod utils;
 
+pub mod arena;
+
+extern crate rand;
+
 use flexi_logger::*;
 
 fn main() {
