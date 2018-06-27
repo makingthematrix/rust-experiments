@@ -3,10 +3,28 @@ use std::collections::HashSet;
 use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+use utils::umap::*;
+
+use std::cmp::PartialEq;
+use std::fmt;
+
+#[derive(Default, Clone)]
 struct MyData {
     id: usize,
     number: usize,
     graph: Weak<Graph<MyData>>,
+}
+
+impl fmt::Debug for MyData {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "MyData(id: {}, number: {})", self.id, self.number)
+    }
+}
+
+impl PartialEq for MyData {
+    fn eq(&self, other: &MyData) -> bool {
+        self.id == other.id
+    }
 }
 
 static mut FIRST_FREE_ID: AtomicUsize = AtomicUsize::new(1);
@@ -42,14 +60,14 @@ impl Graph<MyData> {
 }
 
 struct Arena<T> {
-    vec: Vec<Rc<T>>,
+    map: UMap<Rc<T>>,
     dim: usize,
 }
 
 impl Arena<MyData> {
     pub fn new(dim: usize) -> Self {
         Arena {
-            vec: Vec::with_capacity(dim * dim),
+            map: UMap::with_capacity(dim * dim),
             dim,
         }
     }
@@ -59,8 +77,11 @@ impl Arena<MyData> {
 
         for i in 0..dim {
             for j in 0..dim {
-                self.vec
-                    .push(Rc::new(MyData::new((i * dim + j), Rc::downgrade(graph))));
+                let key = i * dim + j;
+                self.map.put(
+                    key,
+                    Rc::new(MyData::new((i * dim + j), Rc::downgrade(graph))),
+                );
             }
         }
     }
@@ -70,7 +91,7 @@ impl Arena<MyData> {
         Self: Sized,
         F: FnMut(&Rc<MyData>),
     {
-        self.vec.iter().for_each(|d| f(d));
+        self.map.iter().for_each(|(key, value)| f(&value));
     }
 }
 

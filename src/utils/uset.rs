@@ -320,6 +320,17 @@ impl Into<Vec<usize>> for USet {
     }
 }
 
+use utils::umap::UMap;
+
+impl<T> From<UMap<T>> for USet
+where
+    T: Clone + PartialEq,
+{
+    fn from(map: UMap<T>) -> Self {
+        map.to_set()
+    }
+}
+
 impl<'a> From<&'a Vec<usize>> for USet {
     fn from(vec: &'a Vec<usize>) -> Self {
         USet::from_vec(vec)

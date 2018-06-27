@@ -1,7 +1,7 @@
 extern crate rand;
 
-use std;
 use self::rand::{Rng, SeedableRng, XorShiftRng};
+use std;
 
 #[derive(Debug, Clone)]
 pub struct PseudoNormalRng {
@@ -10,7 +10,7 @@ pub struct PseudoNormalRng {
 }
 
 #[inline]
-fn polynomial(x: f64, a:f64) -> f64 {
+fn polynomial(x: f64, a: f64) -> f64 {
     a * x * x * x + (1.0 - a) * x
 }
 
@@ -34,12 +34,18 @@ pub fn pseudo_normalize(x: f64, a: f64) -> f64 {
 impl PseudoNormalRng {
     #[inline]
     pub fn new(a: f64) -> Self {
-        PseudoNormalRng { a, rng: rand::XorShiftRng::new_unseeded() }
+        PseudoNormalRng {
+            a,
+            rng: rand::XorShiftRng::new_unseeded(),
+        }
     }
 
     #[inline]
     pub fn with_seed(a: f64, seed: [u32; 4]) -> Self {
-        PseudoNormalRng { a, rng: rand::XorShiftRng::from_seed(seed) }
+        PseudoNormalRng {
+            a,
+            rng: rand::XorShiftRng::from_seed(seed),
+        }
     }
 
     pub fn gen_range(&mut self, low: usize, high: usize) -> usize {
@@ -72,6 +78,9 @@ impl SeedableRng<[u32; 4]> for PseudoNormalRng {
     }
 
     fn from_seed(seed: [u32; 4]) -> Self {
-        PseudoNormalRng { a: 1.0, rng: rand::XorShiftRng::from_seed(seed) }
+        PseudoNormalRng {
+            a: 1.0,
+            rng: rand::XorShiftRng::from_seed(seed),
+        }
     }
 }

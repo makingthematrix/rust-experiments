@@ -20,14 +20,14 @@ mod prng_tests {
         let v = vec![0.1, 0.25, 0.33, 0.5, 0.66, 0.75, 0.9];
         let mut diff_sum = 0.0;
         for i in 0..(v.len() - 1) {
-            diff_sum += v[i+1] - v[i];
+            diff_sum += v[i + 1] - v[i];
         }
 
         let vn: Vec<f64> = v.iter().map(|&x| pseudo_normalize(x, 1.0)).collect();
 
         let mut diff_sum_n = 0.0;
         for i in 0..(vn.len() - 1) {
-            diff_sum_n += vn[i+1] - vn[i];
+            diff_sum_n += vn[i + 1] - vn[i];
         }
 
         assert_that!(diff_sum > diff_sum_n).is_true();
@@ -44,7 +44,11 @@ mod prng_tests {
             results[index] += 1;
         }
 
-        results.iter().enumerate().map(|(i, &x)| ((((SIZE as f64/2.0) as f64 - i as f64)*x as f64) as f64).powi(2)).sum()
+        results
+            .iter()
+            .enumerate()
+            .map(|(i, &x)| ((((SIZE as f64 / 2.0) as f64 - i as f64) * x as f64) as f64).powi(2))
+            .sum()
     }
 
     #[test]
