@@ -39,13 +39,13 @@ pub fn find_city_distances(city_vec: &[usize]) -> Vec<usize> {
     }
 
     let &max_distance = distance_map.iter().max().unwrap();
-    let result: Vec<usize> = distance_map.iter().fold(
-        vec![0; max_distance + 1],
-        |mut acc, &distance| {
-            acc[distance] += 1;
-            acc
-        },
-    );
+    let result: Vec<usize> =
+        distance_map
+            .iter()
+            .fold(vec![0; max_distance + 1], |mut acc, &distance| {
+                acc[distance] += 1;
+                acc
+            });
 
     result
 }

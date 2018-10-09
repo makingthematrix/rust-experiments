@@ -20,6 +20,8 @@ pub mod utils;
 
 pub mod arena;
 
+pub mod strings;
+
 extern crate rand;
 
 use flexi_logger::*;
@@ -38,6 +40,11 @@ fn main() {
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
+    //cities();
+    strings::strings();
+}
+
+fn cities() {
     let size = match env::args().nth(1) {
         Some(s) => s.parse::<usize>().unwrap(),
         None => 25_000,

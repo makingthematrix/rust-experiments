@@ -1,5 +1,4 @@
-use std::cell::{RefCell, RefMut};
-use std::collections::HashSet;
+use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -8,7 +7,7 @@ use utils::umap::*;
 use std::cmp::PartialEq;
 use std::fmt;
 
-#[derive(Default, Clone)]
+#[derive(Clone)]
 struct MyData {
     id: usize,
     number: usize,
