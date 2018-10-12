@@ -22,6 +22,8 @@ pub mod arena;
 
 pub mod strings;
 
+pub mod redis;
+
 extern crate rand;
 
 use flexi_logger::*;
@@ -40,8 +42,11 @@ fn main() {
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
+    redis::main();
     //cities();
-    strings::strings();
+    //strings::strings();
+
+
 }
 
 fn cities() {

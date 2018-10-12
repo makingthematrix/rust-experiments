@@ -13,11 +13,13 @@ fn gen_uset(c: &mut Criterion) {
     });
 }
 
+/*
 fn gen_hashset(c: &mut Criterion) {
     c.bench_function("HashSet generate map 10000", |b| {
         b.iter({ || gen_cities_hashset(1000, 100) })
     });
 }
+*/
 
 fn solve_uset(c: &mut Criterion) {
     let map = gen_cities_uset(5000, 75);
@@ -26,5 +28,5 @@ fn solve_uset(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, gen_uset, gen_hashset, solve_uset);
+criterion_group!(benches, gen_uset, /*gen_hashset,*/ solve_uset);
 criterion_main!(benches);
