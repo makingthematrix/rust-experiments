@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod arena1_tests {
-    use arena::arena1::*;
+    use crate::arena::arena1::*;
     use std::collections::HashSet;
 
     use quickcheck::TestResult;

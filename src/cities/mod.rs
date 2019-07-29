@@ -8,8 +8,8 @@ extern crate rand;
 
 use self::rand::{Rng, ThreadRng};
 
+use crate::utils::uset::USet;
 use std::collections::HashSet;
-use utils::uset::USet;
 
 /// Calculates a vector where indexes are the distances from the capital and the values are
 /// the number of cities with the given distance.

@@ -1,12 +1,8 @@
 #[cfg(test)]
 mod prng_tests {
-    extern crate rand;
-
-    use utils::prng::*;
-
-    use spectral::prelude::*;
-
+    use crate::utils::prng::*;
     use rand::Rng;
+    use spectral::prelude::*;
 
     #[test]
     fn create_rng() {
@@ -61,5 +57,33 @@ mod prng_tests {
         assert_that!(v10 > v25);
         assert_that!(v25 > v50);
         println!("{:?}, {:?}, {:?}, {:?}", v025, v10, v25, v50);
+    }
+
+    #[test]
+    fn foo() {
+        const SAMPLES: usize = 10000;
+        let mut r = PseudoNormalRng::new(1.0);
+        let mut rsum = 0.0;
+        let mut asum = 0.0;
+        let mut min = 1.0;
+        let mut max = 0.0;
+        for _i in 0..SAMPLES {
+            let res: f64 = r.gen();
+            asum += res;
+            if res < min {
+                min = res
+            };
+            if res > max {
+                max = res
+            };
+            rsum += (0.5 - res).powi(2);
+        }
+
+        let avg = asum / (SAMPLES as f64);
+        let dev = (rsum / (SAMPLES as f64)).sqrt();
+        println!(
+            "min:{:?}, max: {:?}, avg: {:?}, dev: {:?}",
+            min, max, avg, dev
+        );
     }
 }

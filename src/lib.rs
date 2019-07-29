@@ -1,3 +1,7 @@
+#![allow(unknown_lints)]
+
+use std::env;
+
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
@@ -6,14 +10,20 @@ extern crate quickcheck;
 #[macro_use]
 extern crate spectral;
 
-extern crate itertools;
-
+extern crate flexi_logger;
+#[macro_use]
 extern crate log;
+
+extern crate itertools;
 
 pub mod cities;
 #[macro_use]
 pub mod utils;
 
-extern crate rand;
-
 pub mod arena;
+
+pub mod strings;
+
+pub mod redis;
+
+extern crate rand;

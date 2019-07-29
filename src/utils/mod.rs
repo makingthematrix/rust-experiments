@@ -1,13 +1,10 @@
-extern crate rand;
-
-pub mod uset;
-#[cfg(test)]
-mod uset_tests;
-
-pub mod umap;
-#[cfg(test)]
-mod umap_tests;
-
 pub mod prng;
+pub mod umap;
+pub mod uset;
+
 #[cfg(test)]
 mod prng_tests;
+#[cfg(test)]
+mod umap_tests;
+#[cfg(test)]
+mod uset_tests;

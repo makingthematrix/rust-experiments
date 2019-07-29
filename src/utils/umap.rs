@@ -1,18 +1,17 @@
 #![macro_use]
 
+use crate::utils::uset::USet;
 use std::clone::Clone;
-use utils::uset::USet;
-
 use std::cmp::{max, min};
-
+use std::fmt;
 use std::ops::{Add, BitXor, Mul, Sub};
 
 // TODO: https://doc.rust-lang.org/src/alloc/vec_deque.rs.html#1909-1913
 // rewrite in a similar fashion
 
-#[derive(Debug, Default, Clone)]
+#[derive(Default, Clone)]
 pub struct UMap<T> {
-    vec: Vec<Option<T>>,
+    pub vec: Vec<Option<T>>,
     len: usize,
 }
 
@@ -27,15 +26,15 @@ impl<'a, T> Iterator for UMapIter<'a, T>
 where
     T: Clone + PartialEq,
 {
-    type Item = (usize, T);
+    type Item = (usize, &'a T);
 
     fn next(&mut self) -> Option<Self::Item> {
         let max = self.handle.vec.len() - self.rindex;
         while self.index < max {
             let index = self.index;
             self.index += 1;
-            if let Some(&Some(ref value)) = self.handle.vec.get(index) {
-                return Some((index, value.clone()));
+            if let Some(ref value) = self.handle.vec[index] {
+                return Some((index, value));
             }
         }
         None
@@ -51,8 +50,8 @@ where
         while self.rindex < len - self.index {
             let index = len - self.rindex - 1;
             self.rindex += 1;
-            if let Some(&Some(ref value)) = self.handle.vec.get(index) {
-                return Some((index, value.clone()));
+            if let Some(ref value) = self.handle.vec[index] {
+                return Some((index, &value));
             }
         }
         None
@@ -106,6 +105,18 @@ where
         key < self.vec.len() && self.vec[key].is_some()
     }
 
+    pub fn get_ref(&self, key: usize) -> Option<&T> {
+        if key < self.vec.len() {
+            if let Some(&Some(ref v)) = self.vec.get(key) {
+                Some(&v)
+            } else {
+                None
+            }
+        } else {
+            None
+        }
+    }
+
     #[inline]
     pub fn get(&self, key: usize) -> Option<T> {
         if key < self.vec.len() {
@@ -128,7 +139,7 @@ where
 
     #[inline]
     pub fn to_set(&self) -> USet {
-        let set: Vec<bool> = self.vec.iter().map(|value| value.is_some()).collect();
+        let set: Vec<bool> = self.vec.iter().map(Option::is_some).collect();
         USet::from_fields(set, self.len)
     }
 
@@ -166,12 +177,11 @@ where
     #[inline]
     fn debug_compare(self: &Self, other: &UMap<T>) {
         // don't perform operation on maps if they have different elements at the same places - clearly something's messed up
-        debug_assert!(
-            self.iter()
-                .zip(other.iter())
-                .find(|&((i1, ref v1), (i2, ref v2))| i1 == i2 && v1 != v2)
-                .is_none()
-        );
+        debug_assert!(self
+            .iter()
+            .zip(other.iter())
+            .find(|&((i1, ref v1), (i2, ref v2))| i1 == i2 && v1 != v2)
+            .is_none());
     }
 
     // TODO: think about the naming: verbs or nouns? `substract` is not symmetric, is that important?
@@ -259,11 +269,12 @@ where
     T: Clone + PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
-        self.len == other.len && self
-            .iter()
-            .zip(other.iter())
-            .find(|&((key1, ref value1), (key2, ref value2))| key1 != key2 || value1 != value2)
-            .is_none()
+        self.len == other.len
+            && self
+                .iter()
+                .zip(other.iter())
+                .find(|&((key1, ref value1), (key2, ref value2))| key1 != key2 || value1 != value2)
+                .is_none()
     }
 }
 
@@ -317,5 +328,21 @@ where
 {
     fn from(vec: Vec<(usize, T)>) -> Self {
         UMap::from_vec(&vec)
+    }
+}
+
+impl<T> fmt::Debug for UMap<T>
+where
+    T: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "UMap(").unwrap();
+        for item in &self.vec {
+            if let Some(entry) = item {
+                write!(f, "{:?}", entry).unwrap();
+            }
+        }
+        write!(f, ")").unwrap();
+        Ok(())
     }
 }

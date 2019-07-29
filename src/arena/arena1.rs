@@ -1,5 +1,4 @@
-use std::cell::{RefCell, RefMut};
-use std::collections::HashSet;
+use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
@@ -60,7 +59,7 @@ impl Arena<MyData> {
         for i in 0..dim {
             for j in 0..dim {
                 self.vec
-                    .push(Rc::new(MyData::new((i * dim + j), Rc::downgrade(graph))));
+                    .push(Rc::new(MyData::new(i * dim + j, Rc::downgrade(graph))));
             }
         }
     }

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod cities_tests {
-    use cities::*;
+    use crate::cities::*;
 
     use spectral::prelude::*;
 

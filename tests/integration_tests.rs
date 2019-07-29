@@ -1,5 +1,3 @@
-#![feature(test)]
-
 extern crate rust_experiments;
 
 use rust_experiments::cities::*;
@@ -13,7 +11,7 @@ fn generate_and_solve_standard() {
 
 #[test]
 fn generate_and_solve_uset() {
-    let map = gen_cities_uset(1000, 25);
+    let map = gen_cities_uset(5, 25);
     let result = find_city_distances(&map);
     println!("{:?}", result);
 }

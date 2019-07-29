@@ -2,7 +2,7 @@ use std::cell::RefCell;
 use std::rc::{Rc, Weak};
 use std::sync::atomic::{AtomicUsize, Ordering};
 
-use utils::umap::*;
+use crate::utils::umap::*;
 
 use std::cmp::PartialEq;
 use std::fmt;
@@ -77,10 +77,8 @@ impl Arena<MyData> {
         for i in 0..dim {
             for j in 0..dim {
                 let key = i * dim + j;
-                self.map.put(
-                    key,
-                    Rc::new(MyData::new((i * dim + j), Rc::downgrade(graph))),
-                );
+                self.map
+                    .put(key, Rc::new(MyData::new(i * dim + j, Rc::downgrade(graph))));
             }
         }
     }
@@ -90,7 +88,7 @@ impl Arena<MyData> {
         Self: Sized,
         F: FnMut(&Rc<MyData>),
     {
-        self.map.iter().for_each(|(key, value)| f(&value));
+        self.map.iter().for_each(|(_, value)| f(&value));
     }
 }
 

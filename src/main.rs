@@ -1,3 +1,5 @@
+#![allow(unknown_lints)]
+
 use std::env;
 
 #[cfg(test)]
@@ -36,17 +38,13 @@ fn main() {
         .log_to_file()
         .directory("log")
         .print_message()
-        .duplicate_error()
-        .duplicate_info()
         .format(flexi_logger::detailed_format)
         .start()
         .unwrap_or_else(|e| panic!("Logger initialization failed with {}", e));
 
-    redis::main();
-    //cities();
+    //redis::main();
+    cities();
     //strings::strings();
-
-
 }
 
 fn cities() {

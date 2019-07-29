@@ -1,8 +1,8 @@
 //! A string examples module
 
 use std;
-use std::thread;
 use std::fmt;
+use std::thread;
 
 pub fn strings() {
     strings1()
@@ -40,7 +40,7 @@ fn strings5() {
 
 fn strings6() {
     let hello: Vec<char> = "Hello, world 6!".chars().collect();
-    for i in 0 .. hello.len() {
+    for i in 0..hello.len() {
         print!("{}", hello[i]);
     }
     println!()
@@ -63,14 +63,22 @@ fn strings8() {
     let mut it = hello.iter();
     let mut end = false;
     while !end {
-        print!("{}", it.next().unwrap_or_else(|| { end = true; &'\n' }));
+        print!(
+            "{}",
+            it.next().unwrap_or_else(|| {
+                end = true;
+                &'\n'
+            })
+        );
     }
 }
 
 fn strings9() {
     let hello: Vec<char> = "Hello, world 9!".chars().collect();
     let mut it = hello.iter();
-    while let Some(c) = it.next() { print!("{}", c); }
+    while let Some(c) = it.next() {
+        print!("{}", c);
+    }
     println!()
 }
 
@@ -89,12 +97,12 @@ fn strings11() {
 }
 
 fn strings12() {
-    let hello = || { println!("Hello, world 12!") };
+    let hello = || println!("Hello, world 12!");
     hello()
 }
 
 fn strings13() {
-    let hello = || { println!("Hello, world 13!") };
+    let hello = || println!("Hello, world 13!");
     let handle = thread::spawn(hello);
     handle.join();
 }
@@ -105,7 +113,6 @@ fn strings14() {
     let hello = Hello("Hello, world 14!");
     println!("{}", hello.0)
 }
-
 
 fn strings15() {
     struct Hello(&'static str);
@@ -136,12 +143,15 @@ fn strings16() {
 fn strings17() {
     struct Hello {
         h: String,
-        w: String
+        w: String,
     }
 
     impl Hello {
         pub fn new(hh: &'static str, ww: &'static str) -> Self {
-            Hello { h: String::from(hh), w: String::from(ww) }
+            Hello {
+                h: String::from(hh),
+                w: String::from(ww),
+            }
         }
 
         fn join(&self) -> String {
@@ -159,17 +169,23 @@ fn strings18() {
 }
 
 fn strings19() {
-    let hello = [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 49, 57, 33];
+    let hello = [
+        72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 49, 57, 33,
+    ];
     println!("{}", String::from_utf8_lossy(&hello));
 }
 
 fn strings20() {
-    let hello = vec![72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 50, 48, 33];
+    let hello = vec![
+        72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 50, 48, 33,
+    ];
     println!("{}", String::from_utf8(hello).unwrap());
 }
 
 fn strings21() {
-    let hello_bytes: [u8; 16] = [72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 50, 49, 33];
+    let hello_bytes: [u8; 16] = [
+        72, 101, 108, 108, 111, 44, 32, 119, 111, 114, 108, 100, 32, 50, 49, 33,
+    ];
     let hello_vec: Vec<char> = hello_bytes.iter().map(|b| *b as char).collect();
     let hello_str: String = hello_vec.iter().collect();
     println!("{}", hello_str);
@@ -177,7 +193,8 @@ fn strings21() {
 
 fn strings22() {
     struct Hello;
-    impl Drop for Hello { // this is called when a Hello instance is deallocated
+    impl Drop for Hello {
+        // this is called when a Hello instance is deallocated
         fn drop(&mut self) {
             println!("Hello, world 22!");
         }
@@ -310,4 +327,8 @@ futures work by themselves only from nightly, but you can have them on stable as
 
 Tests:
 proptest is a test library which may replace or help quickcheck
+
+
+Embedding C/C++ in Rust:
+https://www.youtube.com/watch?v=x9acx2zgx4Q
 */
