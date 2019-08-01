@@ -9,12 +9,12 @@ mod umap_tests {
     fn basic_operations() {
         let mut map = UMap::new() as UMap<bool>;
         assert_that!(map.is_empty()).is_true();
-        map.put(5, true);
+        map.put(5, &true);
         assert_that!(map.is_empty()).is_false();
         assert_that!(map.len()).is_equal_to(1);
         assert_that!(map.contains(5)).is_true();
         assert_that!(map.contains(4)).is_false();
-        map.put(2, false);
+        map.put(2, &false);
         assert_that!(map.len()).is_equal_to(2);
         assert_that!(map.get(2)).is_equal_to(Some(false));
         let re1 = map.remove(5);
@@ -47,9 +47,9 @@ mod umap_tests {
     #[test]
     fn better_iterator() {
         let mut map = UMap::new();
-        map.put(2, 2);
-        map.put(4, 4);
-        map.put(5, 5);
+        map.put(2, &2);
+        map.put(4, &4);
+        map.put(5, &5);
         /* TODO: I need an awesome macro that would let me write it like:
             ```
             let map = umap!(2 -> 2, 4 -> 4, 5 -> 5)

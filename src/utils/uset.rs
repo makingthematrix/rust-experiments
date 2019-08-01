@@ -6,6 +6,9 @@ use std::ops::Range;
 
 use std::ops::{Add, BitXor, Mul, Sub};
 
+use crate::utils::umap::UMap;
+use itertools::{Itertools, MinMaxResult};
+
 /// A set of unsigned integers (usizes) implemented as a vector of booleans
 /// where `vec[n - offset] == true` means that the set contains `n`. Intended for
 /// handling small to medium (a few thousands) number of identifiers.
@@ -132,7 +135,7 @@ impl USet {
     pub fn add(&mut self, id: usize) {
         match id {
             _ if self.capacity() == 0 => {
-                // essentially EMPTY_SET
+                // essentially EMPTY_SET, but it is guaranteed it's
                 self.vec = vec![false; INITIAL_CAPACITY];
                 self.vec[0] = true;
                 self.min = id;
@@ -606,9 +609,6 @@ impl Into<Vec<usize>> for USet {
         self.iter().collect()
     }
 }
-
-use crate::utils::umap::UMap;
-use itertools::{Itertools, MinMaxResult};
 
 impl<T> From<UMap<T>> for USet
 where

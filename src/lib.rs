@@ -1,7 +1,5 @@
 #![allow(unknown_lints)]
 
-use std::env;
-
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
@@ -11,7 +9,6 @@ extern crate quickcheck;
 extern crate spectral;
 
 extern crate flexi_logger;
-#[macro_use]
 extern crate log;
 
 extern crate itertools;
