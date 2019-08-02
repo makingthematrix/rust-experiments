@@ -240,7 +240,7 @@ pub fn gen_cities_hashset(size: usize, max_roads_per_distance: usize) -> Vec<usi
     let mut city_vec = Vec::with_capacity(size);
     let mut r = rand::thread_rng();
 
-    let all_cities: HashSet<usize> = (0..size).into_iter().collect();
+    let all_cities: HashSet<usize> = (0..size).collect();
 
     let capital = r.gen_range(0, size);
     city_vec.push((capital, capital));

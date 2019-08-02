@@ -124,8 +124,8 @@ impl USet {
     pub fn trim(&mut self) {
         if !self.is_empty() {
             let mut vec = vec![false; self.max - self.min + 1];
-            for i in self.min..=self.max {
-                vec[i - self.min] = self.contains(i);
+            for id in self.min..=self.max {
+                vec[id - self.min] = self.contains(id);
             }
             self.vec = vec;
             self.offset = self.min;
@@ -151,7 +151,7 @@ impl USet {
                 self.offset = id;
             }
             _ if id < self.offset => {
-                let mut vec = vec![false; self.max - id];
+                let mut vec = vec![false; self.max - id + 1];
                 vec[0] = true;
                 for i in self.min..=self.max {
                     vec[i - id] = self.contains(i);
@@ -270,7 +270,7 @@ impl USet {
                 let len = slice.len();
                 let capacity = cmp::max(INITIAL_CAPACITY, max + 1 - min);
                 let mut vec = vec![false; capacity];
-                slice.iter().for_each(|&i| vec[i - min] = true);
+                slice.iter().for_each(|&id| vec[id - min] = true);
                 (min, max, len, vec)
             }
         }
@@ -293,6 +293,7 @@ impl USet {
 
     pub fn from_range(r: Range<usize>) -> Self {
         if r.len() == 0 {
+            // is_empty is unstable for ranges, don't let clippy tell you otherwise
             EMPTY_SET.clone()
         } else {
             let offset = r.start;
@@ -300,7 +301,7 @@ impl USet {
             let len = r.len();
             let capacity = cmp::max(INITIAL_CAPACITY, r.len());
             let mut vec = vec![false; capacity];
-            r.for_each(|i| vec[i - offset] = true);
+            r.for_each(|id| vec[id - offset] = true);
             USet {
                 vec,
                 len,
@@ -319,14 +320,14 @@ impl USet {
             let min = vec
                 .iter()
                 .enumerate()
-                .find_map(|(i, b)| if *b { Some(i) } else { None })
+                .find_map(|(id, b)| if *b { Some(id) } else { None })
                 .unwrap()
                 + offset;
             let max = vec
                 .iter()
                 .enumerate()
                 .rev()
-                .find_map(|(i, b)| if *b { Some(i) } else { None })
+                .find_map(|(id, b)| if *b { Some(id) } else { None })
                 .unwrap()
                 + offset;
             USet {
@@ -405,8 +406,8 @@ impl USet {
             let mut vec = vec![false; max + 1 - min];
             let mut len = 0usize;
 
-            vec.iter_mut().enumerate().for_each(|(i, value)| {
-                if self.contains(i + self.offset) || other.contains(i + self.offset) {
+            vec.iter_mut().enumerate().for_each(|(id, value)| {
+                if self.contains(id + min) || other.contains(id + min) {
                     *value = true;
                     len += 1;
                 }
@@ -425,11 +426,12 @@ impl USet {
     fn difference(&self, other: &USet) -> Self {
         let mut vec = self.vec.clone();
         let mut len = self.len;
-        let offset = self.offset;
 
-        other.iter().for_each(|i| {
-            vec[i - offset] = false;
-            len -= 1;
+        other.iter().for_each(|id| {
+            if self.contains(id) {
+                vec[id - self.offset] = false;
+                len -= 1;
+            }
         });
 
         if len == 0 {
@@ -438,20 +440,20 @@ impl USet {
             let min = vec
                 .iter()
                 .enumerate()
-                .find_map(|(i, b)| if *b { Some(i) } else { None })
+                .find_map(|(id, b)| if *b { Some(id) } else { None })
                 .unwrap()
-                + offset;
+                + self.offset;
             let max = vec
                 .iter()
                 .enumerate()
                 .rev()
-                .find_map(|(i, b)| if *b { Some(i) } else { None })
+                .find_map(|(id, b)| if *b { Some(id) } else { None })
                 .unwrap()
-                + offset;
+                + self.offset;
             USet {
                 vec,
                 len,
-                offset,
+                offset: self.offset,
                 min,
                 max,
             }
@@ -465,18 +467,18 @@ impl USet {
             let rough_range = cmp::max(self.min, other.min)..=cmp::min(self.max, other.max);
             let mn = rough_range
                 .clone()
-                .find(|&i| self.contains(i) && other.contains(i));
+                .find(|&id| self.contains(id) && other.contains(id));
             let mx = rough_range
                 .clone()
                 .rev()
-                .find(|&i| self.contains(i) && other.contains(i));
+                .find(|&id| self.contains(id) && other.contains(id));
             if let Some(min) = mn {
                 if let Some(max) = mx {
                     let mut vec = vec![false; max + 1 - min];
                     let mut len = 0usize;
-                    for i in min..=max {
-                        if self.contains(i) && other.contains(i) {
-                            vec[i - min] = true;
+                    for id in min..=max {
+                        if self.contains(id) && other.contains(id) {
+                            vec[id - min] = true;
                             len += 1;
                         }
                     }
@@ -505,21 +507,21 @@ impl USet {
             self.clone()
         } else {
             let rough_range = cmp::min(self.min, other.min)..=cmp::max(self.max, other.max);
-            let mn = rough_range.clone().find(|&i| {
-                (self.contains(i) && !other.contains(i)) || (!self.contains(i) && other.contains(i))
+            let mn = rough_range.clone().find(|&id| {
+                (self.contains(id) && !other.contains(id)) || (!self.contains(id) && other.contains(id))
             });
-            let mx = rough_range.clone().rev().find(|&i| {
-                (self.contains(i) && !other.contains(i)) || (!self.contains(i) && other.contains(i))
+            let mx = rough_range.clone().rev().find(|&id| {
+                (self.contains(id) && !other.contains(id)) || (!self.contains(id) && other.contains(id))
             });
             if let Some(min) = mn {
                 if let Some(max) = mx {
                     let mut vec = vec![false; max + 1 - min];
                     let mut len = 0usize;
-                    for i in min..=max {
-                        if (self.contains(i) && !other.contains(i))
-                            || (!self.contains(i) && other.contains(i))
+                    for id in min..=max {
+                        if (self.contains(id) && !other.contains(id))
+                            || (!self.contains(id) && other.contains(id))
                         {
-                            vec[i - min] = true;
+                            vec[id - min] = true;
                             len += 1;
                         }
                     }

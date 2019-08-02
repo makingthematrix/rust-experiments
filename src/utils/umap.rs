@@ -106,8 +106,8 @@ where
     pub fn trim(&mut self) {
         if !self.is_empty() {
             let mut vec = vec![None; self.max - self.min + 1];
-            for i in self.min..=self.max {
-                vec[i - self.min] = self.get(i);
+            for key in self.min..=self.max {
+                vec[key - self.min] = self.get(key);
             }
             self.vec = vec;
             self.offset = self.min;
@@ -132,7 +132,7 @@ where
                 self.offset = key;
             }
             _ if key < self.offset => {
-                let mut vec = vec![None; self.max - key];
+                let mut vec = vec![None; self.max - key + 1];
                 vec[0] = Some(value.clone());
                 for i in self.min..=self.max {
                     vec[i - key] = self.get(i);
@@ -387,11 +387,17 @@ where
             let mut len = 0usize;
 
             vec.iter_mut().enumerate().for_each(|(key, value)| {
-                if self.contains(key + self.offset) {
-                    *value = self.get(key);
+                println!(
+                    "key: {}, #1 contains: {}, #2 contains: {}",
+                    key,
+                    self.contains(key + self.offset),
+                    other.contains(key + other.offset)
+                );
+                if self.contains(key + min) {
+                    *value = self.get(key + min);
                     len += 1;
-                } else if other.contains(key + self.offset) {
-                    *value = other.get(key);
+                } else if other.contains(key + min) {
+                    *value = other.get(key + min);
                     len += 1;
                 }
             });
@@ -409,11 +415,12 @@ where
     fn difference(&self, other: &UMap<T>) -> Self {
         let mut vec = self.vec.clone();
         let mut len = self.len;
-        let offset = self.offset;
 
         other.iter().for_each(|(key, _)| {
-            vec[key - offset] = None;
-            len -= 1;
+            if self.contains(key) {
+                vec[key - self.offset] = None;
+                len -= 1;
+            }
         });
 
         if len == 0 {
@@ -422,20 +429,20 @@ where
             let min = vec
                 .iter()
                 .enumerate()
-                .find_map(|(i, b)| if b.is_some() { Some(i) } else { None })
+                .find_map(|(key, b)| if b.is_some() { Some(key) } else { None })
                 .unwrap()
-                + offset;
+                + self.offset;
             let max = vec
                 .iter()
                 .enumerate()
                 .rev()
-                .find_map(|(i, b)| if b.is_some() { Some(i) } else { None })
+                .find_map(|(key, b)| if b.is_some() { Some(key) } else { None })
                 .unwrap()
-                + offset;
+                + self.offset;
             UMap {
                 vec,
                 len,
-                offset,
+                offset: self.offset,
                 min,
                 max,
             }
@@ -449,18 +456,18 @@ where
             let rough_range = cmp::max(self.min, other.min)..=cmp::min(self.max, other.max);
             let mn = rough_range
                 .clone()
-                .find(|&i| self.contains(i) && other.contains(i));
+                .find(|&key| self.contains(key) && other.contains(key));
             let mx = rough_range
                 .clone()
                 .rev()
-                .find(|&i| self.contains(i) && other.contains(i));
+                .find(|&key| self.contains(key) && other.contains(key));
             if let Some(min) = mn {
                 if let Some(max) = mx {
                     let mut vec = vec![None; max + 1 - min];
                     let mut len = 0usize;
-                    for i in min..=max {
-                        if self.contains(i) && other.contains(i) {
-                            vec[i - min] = self.get(i);
+                    for key in min..=max {
+                        if self.contains(key) && other.contains(key) {
+                            vec[key - min] = self.get(key);
                             len += 1;
                         }
                     }
@@ -489,11 +496,11 @@ where
             self.clone()
         } else {
             let rough_range = cmp::min(self.min, other.min)..=cmp::max(self.max, other.max);
-            let mn = rough_range.clone().find(|&i| {
-                (self.contains(i) && !other.contains(i)) || (!self.contains(i) && other.contains(i))
+            let mn = rough_range.clone().find(|&key| {
+                (self.contains(key) && !other.contains(key)) || (!self.contains(key) && other.contains(key))
             });
-            let mx = rough_range.clone().rev().find(|&i| {
-                (self.contains(i) && !other.contains(i)) || (!self.contains(i) && other.contains(i))
+            let mx = rough_range.clone().rev().find(|&key| {
+                (self.contains(key) && !other.contains(key)) || (!self.contains(key) && other.contains(key))
             });
             if let Some(min) = mn {
                 if let Some(max) = mx {

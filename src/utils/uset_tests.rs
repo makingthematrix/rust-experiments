@@ -191,6 +191,35 @@ mod uset_tests {
     }
 
     #[test]
+    fn should_join_sets() {
+        let set1 = uset![2, 4, 5];
+        let mut iter1 = set1.iter();
+        assert_that!(iter1.next()).is_equal_to(Some(2));
+        assert_that!(iter1.next()).is_equal_to(Some(4));
+        assert_that!(iter1.next()).is_equal_to(Some(5));
+        assert_that!(iter1.next()).is_equal_to(None);
+
+        let set2 = uset![1, 3, 5, 8];
+        let mut iter2 = set2.iter();
+        assert_that!(iter2.next()).is_equal_to(Some(1));
+        assert_that!(iter2.next()).is_equal_to(Some(3));
+        assert_that!(iter2.next()).is_equal_to(Some(5));
+        assert_that!(iter2.next()).is_equal_to(Some(8));
+        assert_that!(iter2.next()).is_equal_to(None);
+
+        let set3 = &set1 + &set2;
+        assert_that!(set3.len()).is_equal_to(6);
+        let mut iter3 = set3.iter();
+        assert_that!(iter3.next()).is_equal_to(Some(1));
+        assert_that!(iter3.next()).is_equal_to(Some(2));
+        assert_that!(iter3.next()).is_equal_to(Some(3));
+        assert_that!(iter3.next()).is_equal_to(Some(4));
+        assert_that!(iter3.next()).is_equal_to(Some(5));
+        assert_that!(iter3.next()).is_equal_to(Some(8));
+        assert_that!(iter3.next()).is_equal_to(None);
+    }
+
+    #[test]
     fn should_mul() {
         let s1 = uset![0, 3, 8, 10];
         let s2 = uset![3, 8];
@@ -254,5 +283,23 @@ mod uset_tests {
         s.trim();
         assert_eq!(2, s.len());
         assert_eq!(4, s.capacity());
+    }
+
+    #[test]
+    fn should_substract_sets() {
+        let set1 = uset![2, 4, 5];
+        assert_eq!(Some(2), set1.min());
+        assert_eq!(Some(5), set1.max());
+        let set2 = uset![1, 3, 5, 8];
+
+        let set3 = &set1 - &set2;
+        assert_that!(set3.len()).is_equal_to(2);
+        let mut iter3 = set3.iter();
+        assert_that!(iter3.next()).is_equal_to(Some(2));
+        assert_that!(iter3.next()).is_equal_to(Some(4));
+        assert_that!(iter3.next()).is_equal_to(None);
+
+        assert_eq!(Some(2), set3.min());
+        assert_eq!(Some(4), set3.max());
     }
 }
