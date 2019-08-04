@@ -45,7 +45,7 @@ pub fn find_city_distances(city_vec: &[usize]) -> Vec<usize> {
             .fold(vec![0; max_distance + 1], |mut acc, &distance| {
                 acc[distance] += 1;
                 acc
-            });
+             });
 
     result
 }

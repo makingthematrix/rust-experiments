@@ -7,6 +7,8 @@ use std::cmp;
 use std::fmt;
 use std::ops::{Add, BitXor, Mul, Sub};
 
+use std::iter::FromIterator;
+
 #[derive(Default, Clone)]
 pub struct UMap<T> {
     pub vec: Vec<Option<T>>,
@@ -56,18 +58,6 @@ where
             }
         }
         None
-    }
-}
-
-impl<'a, T> IntoIterator for &'a UMap<T>
-where
-    T: Clone + PartialEq,
-{
-    type Item = (usize, &'a T);
-    type IntoIter = UMapIter<'a, T>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
     }
 }
 
@@ -229,7 +219,7 @@ where
 
     pub fn to_set(&self) -> USet {
         let set: Vec<bool> = self.vec.iter().map(Option::is_some).collect();
-        USet::from_fields(set, self.len)
+        USet::from_fields(set, self.offset)
     }
 
     pub fn pop(&mut self, index: usize) -> Option<T> {
@@ -529,6 +519,31 @@ where
                 UMap::new()
             }
         }
+    }
+
+    // TODO: implement Expand and FromIter
+    pub fn get_all(&self, set: &USet) -> Self {
+        if set.is_empty() {
+            UMap::new()
+        } else {
+            let min = set.min().unwrap();
+            let max = set.max().unwrap();
+            let mut vec = vec![None; max - min + 1];
+            set.iter().for_each(|key| vec[key - min] = self.get(key));
+            UMap {
+                vec,
+                len: set.len(),
+                offset: min,
+                min,
+                max
+            }
+        }
+    }
+
+    pub fn get_existing(&self, set: &USet) -> Vec<T> {
+        let mut vec = Vec::with_capacity(set.len());
+        set.iter().filter_map(|key| self.get(key)).for_each(|value| vec.push(value));
+        vec
     }
 }
 

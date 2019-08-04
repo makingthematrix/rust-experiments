@@ -1,6 +1,7 @@
 #[cfg(test)]
 mod umap_tests {
     use crate::utils::umap::*;
+    use crate::utils::uset::*;
     use spectral::prelude::*;
 
     #[test]
@@ -156,5 +157,21 @@ mod umap_tests {
         assert_that!(iter3.next()).is_equal_to(Some((8, &8)));
         assert_that!(iter3.next()).is_equal_to(None);
         assert_that!(iter3.next()).is_equal_to(None);
+    }
+
+    #[test]
+    fn should_extract_submap() {
+        let map1: UMap<i32> = vec![(1, 1), (3, 3), (5, 5), (8, 8)].into();
+        let set = uset![3, 5];
+        let map2 = map1.get_all(&set);
+        assert_eq!(2, map2.len());
+        assert_that!(map2.get(3)).is_equal_to(Some(3));
+        assert_that!(map2.get(5)).is_equal_to(Some(5));
+
+        let res = map1.get_existing(&set);
+        assert_eq!(2, res.len());
+        assert_that!(res[0]).is_equal_to(3);
+        assert_that!(res[1]).is_equal_to(5);
+
     }
 }
