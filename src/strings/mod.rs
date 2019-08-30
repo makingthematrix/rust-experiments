@@ -5,7 +5,28 @@ use std::fmt;
 use std::thread;
 
 pub fn strings() {
-    strings1()
+    strings1();
+    strings2();
+    strings3();
+    strings4();
+    strings5();
+    strings6();
+    strings7();
+    strings8();
+    strings9();
+    strings10();
+    strings11();
+    strings12();
+    strings13();
+    strings14();
+    strings15();
+    strings16();
+    strings17();
+    strings18();
+    strings19();
+    strings20();
+    strings21();
+    strings22();
 }
 
 /// ## Format
@@ -104,7 +125,8 @@ fn strings12() {
 fn strings13() {
     let hello = || println!("Hello, world 13!");
     let handle = thread::spawn(hello);
-    handle.join();
+    let res = handle.join();
+    res.is_ok();
 }
 
 fn strings14() {

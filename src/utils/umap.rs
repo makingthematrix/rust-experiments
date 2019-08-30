@@ -93,14 +93,34 @@ where
         self.vec.len()
     }
 
+    /// Reserves capacity for at least `additional` more elements to be inserted
+    /// in the given `UMap<T>`. Does nothing if the capacity is already sufficient.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the new capacity overflows `usize`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// //let mut map = umap![(1, "a")]; // TODO: implement the umap! macro
+    /// //map.reserve(10);
+    /// //assert!(map.capacity() >= 11);
+    /// ```
+    pub fn reserve(&mut self, additional: usize) {
+        self.vec.reserve(additional);
+    }
+
     pub fn trim(&mut self) {
-        if !self.is_empty() {
+        if !self.is_empty() && (self.vec[0].is_none() || self.vec[self.vec.len() - 1].is_none()) {
             let mut vec = vec![None; self.max - self.min + 1];
             for key in self.min..=self.max {
                 vec[key - self.min] = self.get(key);
             }
             self.vec = vec;
             self.offset = self.min;
+        } else if self.is_empty() && self.capacity() > 0 {
+            self.vec = Vec::with_capacity(0);
         }
     }
 
@@ -223,7 +243,7 @@ where
     }
 
     pub fn pop(&mut self, index: usize) -> Option<T> {
-        let d = self.find_by_index(index);
+        let d = self.index(index);
         if let Some((key, value)) = d {
             self.remove(key);
             Some(value.clone())
@@ -232,7 +252,7 @@ where
         }
     }
 
-    fn find_by_index(&self, index: usize) -> Option<(usize, T)> {
+    pub fn index(&self, index: usize) -> Option<(usize, T)> {
         if index >= self.len {
             None
         } else {
@@ -487,10 +507,12 @@ where
         } else {
             let rough_range = cmp::min(self.min, other.min)..=cmp::max(self.max, other.max);
             let mn = rough_range.clone().find(|&key| {
-                (self.contains(key) && !other.contains(key)) || (!self.contains(key) && other.contains(key))
+                (self.contains(key) && !other.contains(key))
+                    || (!self.contains(key) && other.contains(key))
             });
             let mx = rough_range.clone().rev().find(|&key| {
-                (self.contains(key) && !other.contains(key)) || (!self.contains(key) && other.contains(key))
+                (self.contains(key) && !other.contains(key))
+                    || (!self.contains(key) && other.contains(key))
             });
             if let Some(min) = mn {
                 if let Some(max) = mx {
@@ -521,7 +543,6 @@ where
         }
     }
 
-    // TODO: implement Expand and FromIter
     pub fn get_all(&self, set: &USet) -> Self {
         if set.is_empty() {
             UMap::new()
@@ -535,14 +556,16 @@ where
                 len: set.len(),
                 offset: min,
                 min,
-                max
+                max,
             }
         }
     }
 
     pub fn get_existing(&self, set: &USet) -> Vec<T> {
         let mut vec = Vec::with_capacity(set.len());
-        set.iter().filter_map(|key| self.get(key)).for_each(|value| vec.push(value));
+        set.iter()
+            .filter_map(|key| self.get(key))
+            .for_each(|value| vec.push(value));
         vec
     }
 }
@@ -636,6 +659,16 @@ where
     }
 }
 
+impl<A> FromIterator<(usize, A)> for UMap<A>
+where
+    A: Clone + PartialEq,
+{
+    fn from_iter<T: IntoIterator<Item = (usize, A)>>(iter: T) -> Self {
+        let vec: Vec<(usize, A)> = iter.into_iter().collect();
+        UMap::from_slice(&vec)
+    }
+}
+
 impl<T> Into<Vec<(usize, T)>> for UMap<T>
 where
     T: Clone + PartialEq,
@@ -660,5 +693,16 @@ where
         }
         write!(f, ")").unwrap();
         Ok(())
+    }
+}
+
+impl<A> Extend<(usize, A)> for UMap<A>
+where
+    A: Clone + PartialEq,
+{
+    fn extend<T: IntoIterator<Item = (usize, A)>>(&mut self, iter: T) {
+        for (id, value) in iter {
+            self.put(id, &value);
+        }
     }
 }

@@ -26,6 +26,5 @@ fn solve(c: &mut Criterion) {
     });
 }
 
-
 criterion_group!(benches, gen_uset, gen_hashset, solve);
 criterion_main!(benches);

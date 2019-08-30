@@ -172,6 +172,5 @@ mod umap_tests {
         assert_eq!(2, res.len());
         assert_that!(res[0]).is_equal_to(3);
         assert_that!(res[1]).is_equal_to(5);
-
     }
 }

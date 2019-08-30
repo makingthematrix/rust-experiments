@@ -164,29 +164,29 @@ mod uset_tests {
     }
 
     #[test]
-    fn should_add_all() {
+    fn should_push_all() {
         let mut s1 = uset![0, 3, 8, 10];
-        s1.add_all(&vec![1, 4]);
+        s1.push_all(&vec![1, 4]);
         assert_that!(&s1).is_equal_to(uset![0, 1, 3, 4, 8, 10]);
 
         let mut s2 = uset![0, 3, 8, 10];
-        s2.add_all(&Vec::<usize>::new());
+        s2.push_all(&Vec::<usize>::new());
         assert_that!(&s2).is_equal_to(uset![0, 3, 8, 10]);
 
         let mut s3 = uset![3, 8, 10];
-        s3.add_all(&vec![1, 4]);
+        s3.push_all(&vec![1, 4]);
         assert_that!(&s3).is_equal_to(uset![1, 3, 4, 8, 10]);
 
         let mut s4 = uset![3, 8, 10];
-        s4.add_all(&vec![6, 12]);
+        s4.push_all(&vec![6, 12]);
         assert_that!(&s4).is_equal_to(uset![3, 6, 8, 10, 12]);
 
         let mut s5 = uset![3, 8, 10];
-        s5.add_all(&vec![1, 14]);
+        s5.push_all(&vec![1, 14]);
         assert_that!(&s5).is_equal_to(uset![1, 3, 8, 10, 14]);
 
         let mut s6 = uset![3, 8, 10];
-        s6.add_all(&vec![8, 10, 12]);
+        s6.push_all(&vec![8, 10, 12]);
         assert_that!(&s6).is_equal_to(uset![3, 8, 10, 12]);
     }
 
@@ -273,14 +273,14 @@ mod uset_tests {
     }
 
     #[test]
-    fn should_trim() {
+    fn should_shrink_to_fit() {
         let mut s = uset![3, 5, 8];
         assert_eq!(3, s.len());
-        assert_eq!(INITIAL_CAPACITY, s.capacity());
+        assert_eq!(INITIAL_WORKING_CAPACITY, s.capacity());
         s.remove(3);
         assert_eq!(2, s.len());
-        assert_eq!(INITIAL_CAPACITY, s.capacity());
-        s.trim();
+        assert_eq!(INITIAL_WORKING_CAPACITY, s.capacity());
+        s.shrink_to_fit();
         assert_eq!(2, s.len());
         assert_eq!(4, s.capacity());
     }
@@ -301,5 +301,18 @@ mod uset_tests {
 
         assert_eq!(Some(2), set3.min());
         assert_eq!(Some(4), set3.max());
+    }
+
+    #[test]
+    fn should_make_set_from_iter() {
+        let vec = vec![3usize, 5, 8, 11];
+        let set: USet = vec
+            .iter()
+            .filter_map(|&n| if n % 2 != 0 { Some(n) } else { None })
+            .collect();
+        assert_that!(set.contains(3));
+        assert_that!(set.contains(5));
+        assert_that!(set.contains(11));
+        assert_that!(set.contains(8) == false);
     }
 }
