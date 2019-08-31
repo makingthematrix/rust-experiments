@@ -393,6 +393,30 @@ impl USet {
         self.truncate(0)
     }
 
+    /// Changes the set's capacity, so that it can hold new elements up to the `new_capacity + offset - 1`
+    /// value without reallocation. Note that `new_capacity + offset - 1` is now the largest **value**
+    /// the set can hold without the reallocation, not the total number of values that can be held.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let mut set = USet::from_slice(&[1, 8]);
+    /// assert_eq!(8, set.capacity());
+    /// set.enlarge_capacity_to(10);
+    /// assert_eq!(10, set.capacity());
+    /// set.push(9); // no reallocation needed
+    /// assert_eq!(10, set.capacity());
+    /// set.push(11); // this will trigger reallocation
+    /// assert_eq!(11, set.capacity());
+    /// ```
+    pub fn enlarge_capacity_to(&mut self, new_capacity: usize) {
+        if new_capacity > self.capacity() {
+            self.vec.resize(new_capacity, false);
+        }
+    }
+
     /// Adds the id to the set, and reallocates if needed.
     /// Reallocation is not necessary if the id falls in-between the current min and max.
     ///
@@ -433,7 +457,7 @@ impl USet {
                 self.min = id;
                 self.offset = id;
             }
-            _ if id > self.offset + self.capacity() => {
+            _ if id >= self.offset + self.capacity() => {
                 self.vec.resize(id + 1 - self.offset, false);
                 self.vec[id - self.offset] = true;
                 self.len += 1;
