@@ -9,6 +9,11 @@ use std::ops::{Add, BitXor, Mul, Sub};
 
 use std::iter::FromIterator;
 
+#[allow(unused_macros)]
+macro_rules! umap {
+    ($($x:expr),*) => (UMap::from_slice(&vec![$($x),*]))
+}
+
 #[derive(Default, Clone)]
 pub struct UMap<T> {
     pub vec: Vec<Option<T>>,

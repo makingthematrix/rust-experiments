@@ -173,4 +173,11 @@ mod umap_tests {
         assert_that!(res[0]).is_equal_to(3);
         assert_that!(res[1]).is_equal_to(5);
     }
+
+    #[test]
+    fn should_use_umap_macro() {
+        let map1 = UMap::from_slice(&[(0, "a"), (1, "b"), (2, "c")]);
+        let map2 = umap![(0, "a"), (1, "b"), (2, "c")];
+        assert_eq!(map1, map2);
+    }
 }
