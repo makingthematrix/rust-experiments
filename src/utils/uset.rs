@@ -22,7 +22,7 @@ use itertools::{Itertools, MinMaxResult};
 /// purposes, if the operation does not require new allocation, the capacity might be
 /// left bigger than `max - min`.
 
-/// Creates an USet with the given values.
+/// Creates a `USet` with the given values.
 /// Equivalent to calling [`from_slice`].
 ///
 /// [`from_slice`]: #method.from_slice
@@ -109,7 +109,7 @@ impl USet {
     /// Constructs a new, empty `USet` with the specified capacity.
     ///
     /// The set will be able to hold exactly `capacity` elements without
-    /// reallocating. If `capacity` is 0, the interna; vector will not allocate.
+    /// reallocating. If `capacity` is 0, the internal vector will not allocate.
     ///
     /// It is important to note that although the returned vector has the
     /// *capacity* specified, the vector will have a zero *length*.
@@ -186,7 +186,7 @@ impl USet {
         self.vec.len()
     }
 
-    /// Trims the set to the minimal size able to hold given values.
+    /// Shrinks the set to the minimal size able to hold given values.
     ///
     /// # Examples
     ///
@@ -215,7 +215,7 @@ impl USet {
     }
 
     /// Shortens the set, keeping the first `len` elements and dropping the rest.
-    /// If `len` is greater than the vector's current length, this has no effect.
+    /// If `len` is greater than the set's current length, this has no effect.
     ///
     /// The [`drain`] method can emulate `truncate`, but causes the excess
     /// elements to be returned instead of dropped.
@@ -307,7 +307,7 @@ impl USet {
     /// assert_eq!(drained, USet::from_slice(&[3, 4, 5]));
     /// ```
     ///
-    /// No draining occurs when `len` is greater than the vector's current length:
+    /// No draining occurs when `len` is greater than the set's current length:
     ///
     /// ```
     /// use crate::rust_experiments::utils::uset::*;
@@ -333,7 +333,7 @@ impl USet {
     /// [`clear`]: #method.clear
     /// [`truncate`]: #method.truncate
     /// [`shrink_to_fit`]: #method.shrink_to_fit
-    pub fn drain(&mut self, len: usize) -> USet {
+    pub fn drain(&mut self, len: usize) -> Self {
         if !self.is_empty() && len > 0 && len < self.len {
             let mut new_set = USet::with_capacity(self.len - len);
             let mut values_left = len;
@@ -355,12 +355,13 @@ impl USet {
                 });
             self.max = new_max + self.offset;
             self.len = len;
+            new_set.shrink_to_fit(); // TODO integrate with populating the vector
             new_set
         } else if !self.is_empty() && len == 0 {
             let new_set = self.clone();
             self.vec
                 .iter_mut()
-                .for_each(|value_holder| *value_holder = false);
+                .for_each(|value_holder| if *value_holder { *value_holder = false });
             self.offset = 0;
             self.min = 0;
             self.max = 0;
@@ -489,8 +490,7 @@ impl USet {
     /// ```
     pub fn remove(&mut self, id: usize) {
         match id {
-            _ if id < self.min || id > self.max => {}
-            _ if !self.contains(id) => {}
+            _ if id < self.min || id > self.max || !self.contains(id) => {}
             _ if self.len == 1 => {
                 self.vec[id - self.offset] = false;
                 self.max = 0;
@@ -1085,7 +1085,7 @@ where
     T: Clone + PartialEq,
 {
     fn from(map: UMap<T>) -> Self {
-        map.to_set()
+        map.keys()
     }
 }
 

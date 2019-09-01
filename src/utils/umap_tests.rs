@@ -168,7 +168,7 @@ mod umap_tests {
         assert_that!(map2.get(3)).is_equal_to(Some(3));
         assert_that!(map2.get(5)).is_equal_to(Some(5));
 
-        let res = map1.get_existing(&set);
+        let res = map1.retrieve(&set);
         assert_eq!(2, res.len());
         assert_that!(res[0]).is_equal_to(3);
         assert_that!(res[1]).is_equal_to(5);
@@ -179,5 +179,15 @@ mod umap_tests {
         let map1 = UMap::from_slice(&[(0, "a"), (1, "b"), (2, "c")]);
         let map2 = umap![(0, "a"), (1, "b"), (2, "c")];
         assert_eq!(map1, map2);
+    }
+
+    #[test]
+    fn should_modify_with_get_ref_mut() {
+        let mut map = UMap::from_slice(&[(0, "a"), (1, "b"), (2, "c")]);
+        assert_eq!(Some(&"b"), map.get_ref(1));
+        if let Some(v) = map.get_ref_mut(1) {
+            *v = "d";
+        }
+        assert_eq!(Some(&"d"), map.get_ref(1));
     }
 }
