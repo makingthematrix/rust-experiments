@@ -113,57 +113,10 @@ mod umap_tests {
     }
 
     #[test]
-    fn should_make_common_part_of_maps() {
-        let map1: UMap<i32> = vec![(2, 2), (4, 4), (5, 5)].into();
-        let map2: UMap<i32> = vec![(1, 1), (3, 3), (5, 5), (8, 8)].into();
-
-        let map3 = &map1 * &map2;
-        assert_that!(map3.len()).is_equal_to(1);
-        let mut iter3 = map3.iter();
-        assert_that!(iter3.next()).is_equal_to(Some((5, &5)));
-        assert_that!(iter3.next()).is_equal_to(None);
-    }
-
-    #[test]
-    fn should_substract_maps() {
-        let map1: UMap<i32> = vec![(2, 2), (4, 4), (5, 5)].into();
-        assert_eq!(Some(2), map1.min());
-        assert_eq!(Some(5), map1.max());
-        let map2: UMap<i32> = vec![(1, 1), (3, 3), (5, 5), (8, 8)].into();
-
-        let map3 = &map1 - &map2;
-        assert_that!(map3.len()).is_equal_to(2);
-        let mut iter3 = map3.iter();
-        assert_that!(iter3.next()).is_equal_to(Some((2, &2)));
-        assert_that!(iter3.next()).is_equal_to(Some((4, &4)));
-        assert_that!(iter3.next()).is_equal_to(None);
-
-        assert_eq!(Some(2), map3.min());
-        assert_eq!(Some(4), map3.max());
-    }
-
-    #[test]
-    fn should_xor_maps() {
-        let map1: UMap<i32> = vec![(2, 2), (4, 4), (5, 5)].into();
-        let map2: UMap<i32> = vec![(1, 1), (3, 3), (5, 5), (8, 8)].into();
-
-        let map3 = &map1 ^ &map2;
-        assert_that!(map3.len()).is_equal_to(5);
-        let mut iter3 = map3.iter();
-        assert_that!(iter3.next()).is_equal_to(Some((1, &1)));
-        assert_that!(iter3.next()).is_equal_to(Some((2, &2)));
-        assert_that!(iter3.next()).is_equal_to(Some((3, &3)));
-        assert_that!(iter3.next()).is_equal_to(Some((4, &4)));
-        assert_that!(iter3.next()).is_equal_to(Some((8, &8)));
-        assert_that!(iter3.next()).is_equal_to(None);
-        assert_that!(iter3.next()).is_equal_to(None);
-    }
-
-    #[test]
     fn should_extract_submap() {
         let map1: UMap<i32> = vec![(1, 1), (3, 3), (5, 5), (8, 8)].into();
         let set = uset![3, 5];
-        let map2 = map1.get_all(&set);
+        let map2 = map1.submap(&set);
         assert_eq!(2, map2.len());
         assert_that!(map2.get(3)).is_equal_to(Some(3));
         assert_that!(map2.get(5)).is_equal_to(Some(5));

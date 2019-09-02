@@ -205,8 +205,7 @@ pub fn gen_cities_uset(size: usize, max_roads_per_distance: usize) -> Vec<usize>
         let high = min(max_roads_per_distance, size - city_vec.len());
         let new_cities = r.gen_range(0, high) + 1;
 
-        let used_cities_vec: Vec<usize> = city_vec.iter().map(|&(x, _)| x).collect();
-        let used_cities = USet::from(used_cities_vec);
+        let used_cities: USet = city_vec.iter().map(|&(x, _)| x).collect();
         let mut free_cities = &all_cities - &used_cities;
         let max_cities = min(new_cities, free_cities.len());
 

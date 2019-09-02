@@ -5,7 +5,7 @@ use itertools::{Itertools, MinMaxResult};
 use std::clone::Clone;
 use std::cmp;
 use std::fmt;
-use std::ops::{Add, BitXor, Mul, Sub};
+use std::ops::Add;
 
 use std::iter::FromIterator;
 
@@ -934,7 +934,23 @@ where
         }
     }
 
-    fn union(&self, other: &Self) -> Self {
+    /// Joins two maps of the same type, creating a new one. Values are cloned.
+    /// If one of the maps is empty, the other is cloned.
+    ///
+    /// # Panics
+    ///
+    /// Panics if both maps contain two different values under the same identifier.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// let map1 = UMap::from_slice(&[(1, "a".to_string()), (3, "c".to_string())]);
+    /// let map2 = UMap::from_slice(&[(2, "b".to_string()), (4, "d".to_string())]);
+    /// let map3 = map1.join(&map2);
+    /// assert_eq!(4, map3.len());
+    /// assert_eq!(map3, UMap::from_slice(&[(1, "a".to_string()), (2, "b".to_string()), (3, "c".to_string()), (4, "d".to_string())]));
+    /// ```
+    pub fn join(&self, other: &Self) -> Self {
         if self.is_empty() {
             if other.is_empty() {
                 UMap::new()
@@ -948,6 +964,7 @@ where
                 self.clone()
             }
         } else {
+            self.debug_compare(other);
             let min: usize = cmp::min(self.min, other.min);
             let max: usize = cmp::max(self.max, other.max);
 
@@ -955,12 +972,6 @@ where
             let mut len = 0usize;
 
             vec.iter_mut().enumerate().for_each(|(id, value)| {
-                println!(
-                    "id: {}, #1 contains: {}, #2 contains: {}",
-                    id,
-                    self.contains(id + self.offset),
-                    other.contains(id + other.offset)
-                );
                 if self.contains(id + min) {
                     *value = self.get(id + min);
                     len += 1;
@@ -980,127 +991,6 @@ where
         }
     }
 
-    fn difference(&self, other: &UMap<T>) -> Self {
-        let mut vec = self.vec.clone();
-        let mut len = self.len;
-
-        other.iter().for_each(|(id, _)| {
-            if self.contains(id) {
-                vec[id - self.offset] = None;
-                len -= 1;
-            }
-        });
-
-        if len == 0 {
-            UMap::new()
-        } else {
-            let min = vec
-                .iter()
-                .enumerate()
-                .find_map(|(id, b)| if b.is_some() { Some(id) } else { None })
-                .unwrap()
-                + self.offset;
-            let max = vec
-                .iter()
-                .enumerate()
-                .rev()
-                .find_map(|(id, b)| if b.is_some() { Some(id) } else { None })
-                .unwrap()
-                + self.offset;
-            UMap {
-                vec,
-                len,
-                offset: self.offset,
-                min,
-                max,
-            }
-        }
-    }
-
-    fn common_part(&self, other: &UMap<T>) -> Self {
-        if self.is_empty() || other.is_empty() {
-            UMap::new()
-        } else {
-            let rough_range = cmp::max(self.min, other.min)..=cmp::min(self.max, other.max);
-            let mn = rough_range
-                .clone()
-                .find(|&id| self.contains(id) && other.contains(id));
-            let mx = rough_range
-                .clone()
-                .rev()
-                .find(|&id| self.contains(id) && other.contains(id));
-            if let Some(min) = mn {
-                if let Some(max) = mx {
-                    let mut vec = vec![None; max + 1 - min];
-                    let mut len = 0usize;
-                    for id in min..=max {
-                        if self.contains(id) && other.contains(id) {
-                            vec[id - min] = self.get(id);
-                            len += 1;
-                        }
-                    }
-                    UMap {
-                        vec,
-                        len,
-                        offset: min,
-                        min,
-                        max,
-                    }
-                } else {
-                    UMap::new()
-                }
-            } else {
-                UMap::new()
-            }
-        }
-    }
-
-    fn xor_set(&self, other: &UMap<T>) -> Self {
-        if self.is_empty() && other.is_empty() {
-            UMap::new()
-        } else if self.is_empty() {
-            other.clone()
-        } else if other.is_empty() {
-            self.clone()
-        } else {
-            let rough_range = cmp::min(self.min, other.min)..=cmp::max(self.max, other.max);
-            let mn = rough_range.clone().find(|&id| {
-                (self.contains(id) && !other.contains(id))
-                    || (!self.contains(id) && other.contains(id))
-            });
-            let mx = rough_range.clone().rev().find(|&id| {
-                (self.contains(id) && !other.contains(id))
-                    || (!self.contains(id) && other.contains(id))
-            });
-            if let Some(min) = mn {
-                if let Some(max) = mx {
-                    let mut vec = vec![None; max + 1 - min];
-                    let mut len = 0usize;
-                    for id in min..=max {
-                        if self.contains(id) && !other.contains(id) {
-                            vec[id - min] = self.get(id);
-                            len += 1;
-                        } else if !self.contains(id) && other.contains(id) {
-                            vec[id - min] = other.get(id);
-                            len += 1;
-                        }
-                    }
-                    UMap {
-                        vec,
-                        len,
-                        offset: min,
-                        min,
-                        max,
-                    }
-                } else {
-                    UMap::new()
-                }
-            } else {
-                UMap::new()
-            }
-        }
-    }
-
     /// Returns a submap of all elements with identifiers belonging to `set` which also belong to the map.
     /// Values are cloned.
     ///
@@ -1111,10 +1001,10 @@ where
     ///
     /// let map = UMap::from_slice(&[(2, "a"), (4, "b"), (3, "c"), (5, "d")]);
     /// let set = USet::from_slice(&[2, 3]);
-    /// let map2 = map.get_all(&set);
+    /// let map2 = map.submap(&set);
     /// assert_eq!(map2, UMap::from_slice(&[(2, "a"), (3, "c")]));
     /// ```
-    pub fn get_all(&self, set: &USet) -> Self {
+    pub fn submap(&self, set: &USet) -> Self {
         if set.is_empty() {
             UMap::new()
         } else {
@@ -1179,6 +1069,7 @@ where
     }
 
     /// Returns a set of identifiers for which elements in the map fulfill `check`.
+    ///
     /// # Examples
     /// ```
     /// use crate::rust_experiments::utils::umap::*;
@@ -1207,6 +1098,42 @@ where
             set.shrink_to_fit();
             set
         }
+    }
+
+    pub fn for_all(&self, check: impl Fn(&T) -> bool) -> bool {
+        self.iter().find(|&(_id, value)| !check(value)).is_none()
+    }
+
+    pub fn exists(&self, check: impl Fn(&T) -> bool) -> bool {
+        self.iter().find(|&(_id, value)| check(value)).is_some()
+    }
+
+    pub fn for_all_in_subset(&self, subset: &USet, check: impl Fn(&T) -> bool) -> bool {
+        self.iter()
+            .find(|&(id, value)| subset.contains(id) && !check(value))
+            .is_none()
+    }
+
+    pub fn exists_in_subset(&self, subset: &USet, check: impl Fn(&T) -> bool) -> bool {
+        self.iter()
+            .find(|&(id, value)| subset.contains(id) && check(value))
+            .is_some()
+    }
+
+    pub fn remove_all(&mut self, other: &USet) {
+        other.iter().for_each(|id| {
+            self.remove(id);
+        });
+    }
+
+    pub fn replace(&mut self, id: usize, value: &T) {
+        if let Some(v) = self.get_ref_mut(id) {
+            *v = value.clone();
+        }
+    }
+
+    pub fn replace_all(&mut self, map: &UMap<T>) {
+        map.iter().for_each(|(id, v)| self.replace(id, v));
     }
 }
 
@@ -1243,41 +1170,7 @@ where
 {
     type Output = UMap<T>;
     fn add(self, other: &UMap<T>) -> UMap<T> {
-        self.debug_compare(other);
-        self.union(other)
-    }
-}
-
-impl<'a, T> Sub for &'a UMap<T>
-where
-    T: Clone + PartialEq,
-{
-    type Output = UMap<T>;
-    fn sub(self, other: &UMap<T>) -> UMap<T> {
-        self.debug_compare(other);
-        self.difference(other)
-    }
-}
-
-impl<'a, T> Mul for &'a UMap<T>
-where
-    T: Clone + PartialEq,
-{
-    type Output = UMap<T>;
-    fn mul(self, other: &UMap<T>) -> UMap<T> {
-        self.debug_compare(other);
-        self.common_part(other)
-    }
-}
-
-impl<'a, T> BitXor for &'a UMap<T>
-where
-    T: Clone + PartialEq,
-{
-    type Output = UMap<T>;
-    fn bitxor(self, other: &UMap<T>) -> UMap<T> {
-        self.debug_compare(other);
-        self.xor_set(other)
+        self.join(other)
     }
 }
 

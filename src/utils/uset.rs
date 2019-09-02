@@ -523,6 +523,56 @@ impl USet {
         }
     }
 
+    /// Removes all the identifiers belonging to the `other` set from `self`. Ignores identifiers
+    /// from `other` which do not belong in `self`.
+    /// Equivalent to calling [`remove`] multiple times. Does not reallocate.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let mut set1 = USet::from_slice(&[1, 2, 3, 4]);
+    /// let set2 = USet::from_slice(&[2, 3, 5]);
+    /// set1.remove_all(&set2);
+    /// assert_eq!(set1, USet::from_slice(&[1, 4]));
+    /// ```
+    ///
+    /// [`remove`]: #method.remove
+    pub fn remove_all(&mut self, other: &Self) {
+        other.iter().for_each(|id| self.remove(id));
+    }
+
+    /// Returns true if `self` is a subset of `other`.
+    /// Note that every set is a subset of itself, even if empty, and an empty set is a subset
+    /// of every other set.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let set1 = USet::from_slice(&[1, 2, 3]);
+    /// let set2 = USet::from_slice(&[2, 3]);
+    /// assert!(set2.is_subset_of(&set1));
+    /// assert!(!set1.is_subset_of(&set2));
+    /// assert!(set2.is_subset_of(&set2));
+    ///
+    /// let set3 = USet::from_slice(&[2, 3, 4]);
+    /// assert!(!set1.is_subset_of(&set3));
+    /// assert!(set2.is_subset_of(&set3));
+    ///
+    /// let set4 = USet::new();
+    /// assert!(set4.is_subset_of(&set1));
+    /// assert!(set4.is_subset_of(&set4));
+    /// ```
+    pub fn is_subset_of(&self, other: &USet) -> bool {
+        if self.len > other.len {
+            false
+        } else {
+            self.iter().find(|id| !other.contains(*id)).is_none()
+        }
+    }
+
     /// Removes and returns the element at position `index` within the set.
     /// Returns `None` if `index` is out of bounds.
     ///
