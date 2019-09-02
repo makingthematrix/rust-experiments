@@ -1101,7 +1101,8 @@ where
         }
     }
 
-    /// Returns a submap of all elements with identifiers belonging to `set`. Values are copied.
+    /// Returns a submap of all elements with identifiers belonging to `set` which also belong to the map.
+    /// Values are cloned.
     ///
     /// # Examples
     /// ```
@@ -1131,7 +1132,8 @@ where
         }
     }
 
-    /// Returns a vector of all values with identifiers belonging to `set`. Values are copied.
+    /// Returns a vector of all values with identifiers belonging to `set` which also belong to the map.
+    /// Values are cloned.
     ///
     /// # Examples
     /// ```
@@ -1149,6 +1151,62 @@ where
             .filter_map(|id| self.get(id))
             .for_each(|value| vec.push(value));
         vec
+    }
+
+    /// Returns a vector of references to all values with identifiers belonging to `set`
+    /// which also belong to the map.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    /// let a = String::from("a");
+    /// let b = String::from("b");
+    /// let c = String::from("c");
+    /// let d = String::from("d");
+    /// let e = String::from("e");
+    /// let map = UMap::from_slice(&[(2, a.clone()), (4, b.clone()), (3, c.clone()), (5, d.clone())]);
+    /// let set = USet::from_slice(&[2, 3]);
+    /// let vec = map.retrieve_ref(&set);
+    /// assert_eq!(vec, vec![&a, &c]);
+    /// ```
+    pub fn retrieve_ref(&self, set: &USet) -> Vec<&T> {
+        let mut vec = Vec::with_capacity(set.len());
+        set.iter()
+            .filter_map(|id| self.get_ref(id))
+            .for_each(|value| vec.push(value));
+        vec
+    }
+
+    /// Returns a set of identifiers for which elements in the map fulfill `check`.
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    /// let a = String::from("aa");
+    /// let b = String::from("b");
+    /// let c = String::from("cc");
+    /// let d = String::from("d");
+    /// let e = String::from("ee");
+    /// let map = UMap::from_slice(&[(2, a.clone()), (4, b.clone()), (3, c.clone()), (5, d.clone()), (11, e.clone())]);
+    /// let set = map.query(|v| { v.len() > 1 });
+    /// assert_eq!(set, USet::from_slice(&[2, 3, 11]));
+    /// ```
+    pub fn query(&self, check: impl Fn(&T) -> bool) -> USet {
+        if self.is_empty() {
+            USet::new()
+        } else {
+            let mut set = USet::with_capacity(self.max - self.min + 1);
+            for id in self.min..=self.max {
+                if let Some(v) = self.get_ref(id) {
+                    if check(v) {
+                        set.push(id);
+                    }
+                }
+            }
+            set.shrink_to_fit();
+            set
+        }
     }
 }
 
