@@ -191,7 +191,6 @@ where
         self.vec.len()
     }
 
-
     /// Shrinks the map to the minimal size able to hold its elements.
     ///
     /// # Examples
@@ -293,7 +292,6 @@ where
         }
     }
 
-
     /// Works like [`truncate`], but returns the removed elements in the form of a new map.
     /// This method does not shrink the map's capacity.
     /// If you want to shrink the map's capacity, call [`shrink_to_fit`] afterwards.
@@ -311,18 +309,20 @@ where
     /// let e = String::from("e");
     /// let mut map = UMap::from_slice(&[(1, a.clone()), (2, b.clone()), (3, c.clone()), (4, d.clone()), (5, e.clone())]);
     /// let drained = map.drain(2);
-    /// assert_eq!(map, UMap::from_slice(&[(1, a.clone()), (2, b.clone())]));
-    /// assert_eq!(drained, UMap::from_slice(&[(3, c.clone()), (4, d.clone()), (5, e.clone())]));
+    /// assert_eq!(map, UMap::from_slice(&[(1, a), (2, b)]));
+    /// assert_eq!(drained, UMap::from_slice(&[(3, c), (4, d), (5, e)]));
     /// ```
     ///
     /// No draining occurs when `len` is greater than the map's current length:
     ///
     /// ```
     /// use crate::rust_experiments::utils::umap::*;
-    ///
+    /// let a = String::from("a");
+    /// let b = String::from("b");
+    /// let c = String::from("c");
     /// let mut map = UMap::from_slice(&[(1, a.clone()), (2, b.clone()), (3, c.clone())]);
-    /// let drained = map.truncate(8);
-    /// assert_eq!(map, UMap::from_slice(&[(1, a.clone()), (2, b.clone()), (3, c.clone())]));
+    /// let drained = map.drain(8);
+    /// assert_eq!(map, UMap::from_slice(&[(1, a), (2, b), (3, c)]));
     /// assert!(drained.is_empty());
     /// ```
     ///
@@ -330,12 +330,15 @@ where
     /// method on the original one.
     ///
     /// ```
+    /// let a = String::from("a");
+    /// let b = String::from("b");
+    /// let c = String::from("c");
     /// use crate::rust_experiments::utils::umap::*;
     ///
     /// let mut map = UMap::from_slice(&[(1, a.clone()), (2, b.clone()), (3, c.clone())]);
     /// let drained = map.drain(0);
     /// assert!(map.is_empty());
-    /// assert_eq!(drained, UMap::from_slice(&[(1, a.clone()), (2, b.clone()), (3, c.clone())]));
+    /// assert_eq!(drained, UMap::from_slice(&[(1, a), (2, b), (3, c)]));
     /// ```
     ///
     /// [`clear`]: #method.clear
@@ -367,9 +370,11 @@ where
             new_map
         } else if !self.is_empty() && len == 0 {
             let new_map = self.clone();
-            self.vec
-                .iter_mut()
-                .for_each(|value_holder| if value_holder.is_some() { *value_holder = None });
+            self.vec.iter_mut().for_each(|value_holder| {
+                if value_holder.is_some() {
+                    *value_holder = None
+                }
+            });
             self.offset = 0;
             self.min = 0;
             self.max = 0;
@@ -442,7 +447,6 @@ where
     ///
     /// let mut map = UMap::new();
     /// let id = map.push(&String::from("a"));
-    /// assert_eq!(1, map.capacity());
     /// let value = map.get(id);
     /// assert_eq!(Some(String::from("a")), value);
     /// ```
@@ -454,7 +458,7 @@ where
         self.put(id, value);
         id
     }
-    
+
     /// Adds the element with the given id to the map, possibly overwriting the old element
     /// at that position, and reallocates if needed.
     /// Reallocation is not necessary if the id falls in-between the current min and max.
@@ -523,7 +527,7 @@ where
     /// use crate::rust_experiments::utils::umap::*;
     ///
     /// let mut map = UMap::new();
-    /// let id = map.push(String::from("a"));
+    /// let id = map.push(&"a");
     /// assert!(map.contains(id));
     /// assert_eq!(1, map.len());
     /// ```
@@ -621,7 +625,7 @@ where
     /// ```
     pub fn remove(&mut self, id: usize) -> Option<T> {
         match id {
-            _ if id < self.min || id > self.max || !self.contains(id)  => None,
+            _ if id < self.min || id > self.max || !self.contains(id) => None,
             _ if self.len == 1 => {
                 let t = self.vec[id - self.offset].clone();
                 self.vec[id - self.offset] = None;
@@ -752,7 +756,6 @@ where
         }
     }
 
-
     /// Returns the smallest identifier in the map or None if the map is empty.
     ///
     /// ```
@@ -777,7 +780,6 @@ where
             Some(self.min)
         }
     }
-
 
     /// Returns the largest element in the set or None if the set is empty.
     ///
@@ -1254,9 +1256,7 @@ where
     T: Clone + PartialEq,
 {
     fn into(self) -> Vec<(usize, T)> {
-        self.iter()
-            .map(|(id, value)| (id, value.clone()))
-            .collect()
+        self.iter().map(|(id, value)| (id, value.clone())).collect()
     }
 }
 

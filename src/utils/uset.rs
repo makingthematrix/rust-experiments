@@ -359,9 +359,11 @@ impl USet {
             new_set
         } else if !self.is_empty() && len == 0 {
             let new_set = self.clone();
-            self.vec
-                .iter_mut()
-                .for_each(|value_holder| if *value_holder { *value_holder = false });
+            self.vec.iter_mut().for_each(|value_holder| {
+                if *value_holder {
+                    *value_holder = false
+                }
+            });
             self.offset = 0;
             self.min = 0;
             self.max = 0;
