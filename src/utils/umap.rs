@@ -459,6 +459,11 @@ where
         id
     }
 
+    pub fn push_all(&mut self, slice: &[T]) -> Vec<usize> {
+        self.enlarge_capacity_to(self.capacity() + slice.len());
+        slice.iter().map(|v| self.push(v)).collect()
+    }
+
     /// Adds the element with the given id to the map, possibly overwriting the old element
     /// at that position, and reallocates if needed.
     /// Reallocation is not necessary if the id falls in-between the current min and max.
@@ -781,7 +786,7 @@ where
         }
     }
 
-    /// Returns the largest element in the set or None if the set is empty.
+    /// Returns the largest identifier in the map or None if the map is empty.
     ///
     /// ```
     /// use crate::rust_experiments::utils::umap::*;
@@ -1068,56 +1073,110 @@ where
         vec
     }
 
-    /// Returns a set of identifiers for which elements in the map fulfill `check`.
+    /// Returns a set of identifiers for which elements in the map fulfill the `predicate`.
     ///
     /// # Examples
     /// ```
     /// use crate::rust_experiments::utils::umap::*;
     /// use crate::rust_experiments::utils::uset::*;
-    /// let a = String::from("aa");
-    /// let b = String::from("b");
-    /// let c = String::from("cc");
-    /// let d = String::from("d");
-    /// let e = String::from("ee");
-    /// let map = UMap::from_slice(&[(2, a.clone()), (4, b.clone()), (3, c.clone()), (5, d.clone()), (11, e.clone())]);
+    ///
+    /// let map = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "cc".to_string()), (5, "d".to_string()), (11, "ee".to_string())]);
     /// let set = map.query(|v| { v.len() > 1 });
     /// assert_eq!(set, USet::from_slice(&[2, 3, 11]));
     /// ```
-    pub fn query(&self, check: impl Fn(&T) -> bool) -> USet {
+    pub fn query(&self, predicate: impl Fn(&T) -> bool) -> USet {
         if self.is_empty() {
             USet::new()
         } else {
-            let mut set = USet::with_capacity(self.max - self.min + 1);
+            let mut vec = Vec::with_capacity(self.max - self.min + 1);
             for id in self.min..=self.max {
                 if let Some(v) = self.get_ref(id) {
-                    if check(v) {
-                        set.push(id);
+                    if predicate(v) {
+                        vec.push(id);
                     }
                 }
             }
-            set.shrink_to_fit();
-            set
+
+            USet::from_slice(&vec)
         }
     }
 
-    pub fn for_all(&self, check: impl Fn(&T) -> bool) -> bool {
-        self.iter().find(|&(_id, value)| !check(value)).is_none()
+    /// A utility function making it easier to call `all` on values in the map.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let map1 = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "cc".to_string()), (5, "d".to_string()), (11, "ee".to_string())]);
+    /// assert!(!map1.all(|v| { v.len() > 1 }));
+    /// let set = map1.query(|v| { v.len() > 1 });
+    /// let map2 = map1.submap(&set);
+    /// assert!(map2.all(|v| { v.len() > 1 }));
+    /// ```
+    pub fn all(&self, predicate: impl Fn(&T) -> bool) -> bool {
+        self.iter().all(|(_id, value)| predicate(value))
     }
 
-    pub fn exists(&self, check: impl Fn(&T) -> bool) -> bool {
-        self.iter().find(|&(_id, value)| check(value)).is_some()
+    /// A utility function making it easier to call `any` on values in the map.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let map1 = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "cc".to_string()), (5, "d".to_string()), (11, "ee".to_string())]);
+    /// assert!(map1.any(|v| { v.len() > 1 }));
+    /// let set = map1.query(|v| { v.len() > 1 });
+    /// let map2 = map1.submap(&set);
+    /// assert!(!map2.any(|v| { v.len() == 1 }));
+    /// ```
+    pub fn any(&self, predicate: impl Fn(&T) -> bool) -> bool {
+        self.iter().any(|(_id, value)| predicate(value))
     }
 
-    pub fn for_all_in_subset(&self, subset: &USet, check: impl Fn(&T) -> bool) -> bool {
+    /// A utility function making it easier to call `all` on values in the map with identifiers
+    /// belonging to the given `subset`. You could achieve the same by calling [`retrieve`] on
+    /// the map with `subset` as the argument, and then `all` on the iterator over the resulting
+    /// vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let map = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "ccc".to_string()), (5, "d".to_string()), (11, "ee".to_string())]);
+    /// let set = map.query(|v| { v.len() > 1 });
+    /// assert!(map.all_in_subset(&set, |v| { v.len() > 1 }));
+    /// assert!(!map.all_in_subset(&set, |v| { v.len() == 2 }));
+    /// ```
+    ///
+    /// [`retrieve`]: #method.retrieve
+    pub fn all_in_subset(&self, subset: &USet, predicate: impl Fn(&T) -> bool) -> bool {
+        !self.iter()
+            .any(|(id, value)| subset.contains(id) && !predicate(value))
+    }
+
+    /// A utility function making it easier to call `any` on values in the map with identifiers
+    /// belonging to the given `subset`. You could achieve the same by calling [`retrieve`] on
+    /// the map with `subset` as the argument, and then `any` on the iterator over the resulting
+    /// vector.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let map = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "ccc".to_string()), (5, "d".to_string()), (11, "ee".to_string())]);
+    /// let set = map.query(|v| { v.len() > 1 });
+    /// assert!(!map.any_in_subset(&set, |v| { v.len() == 1 }));
+    /// assert!(map.any_in_subset(&set, |v| { v.len() == 3 }));
+    /// ```
+    ///
+    /// [`retrieve`]: #method.retrieve
+    pub fn any_in_subset(&self, subset: &USet, predicate: impl Fn(&T) -> bool) -> bool {
         self.iter()
-            .find(|&(id, value)| subset.contains(id) && !check(value))
-            .is_none()
-    }
-
-    pub fn exists_in_subset(&self, subset: &USet, check: impl Fn(&T) -> bool) -> bool {
-        self.iter()
-            .find(|&(id, value)| subset.contains(id) && check(value))
-            .is_some()
+            .any(|(id, value)| subset.contains(id) && predicate(value))
     }
 
     pub fn remove_all(&mut self, other: &USet) {
@@ -1157,8 +1216,7 @@ where
                         .skip(other.min - other.offset)
                         .take(other.max + 1 - other.min),
                 )
-                .find(|&(a, b)| *a != *b)
-                .is_none()
+                .all(|(a, b)| *a == *b)
     }
 }
 
