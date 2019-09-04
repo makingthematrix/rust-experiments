@@ -77,10 +77,8 @@ impl Arena<MyData> {
         for i in 0..dim {
             for j in 0..dim {
                 let key = i * dim + j;
-                self.map.put(
-                    key,
-                    &Rc::new(MyData::new(i * dim + j, Rc::downgrade(graph))),
-                );
+                self.map
+                    .put(key, Rc::new(MyData::new(i * dim + j, Rc::downgrade(graph))));
             }
         }
     }

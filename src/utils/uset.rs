@@ -1079,8 +1079,7 @@ impl PartialEq for USet {
                         .skip(other.min - other.offset)
                         .take(other.max + 1 - other.min),
                 )
-                .find(|&(&a, &b)| a != b)
-                .is_none()
+                .all(|(&a, &b)| a == b)
     }
 }
 
