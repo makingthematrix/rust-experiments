@@ -130,11 +130,11 @@ where
     ///
     /// // These are all done without reallocating...
     /// for i in 0..10 {
-    ///     map.push(&i);
+    ///     map.push(i);
     /// }
     ///
     /// // ...but this may make the vector reallocate
-    /// map.push(&11);
+    /// map.push(11);
     /// ```
     pub fn with_capacity(size: usize) -> Self {
         UMap {
@@ -170,7 +170,7 @@ where
     /// let mut map = UMap::new();
     /// assert!(map.is_empty());
     ///
-    /// map.push(&String::from("a"));
+    /// map.push("a".to_string());
     /// assert!(!map.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -359,7 +359,7 @@ where
                             values_left -= 1;
                             new_max = index;
                         } else {
-                            new_map.put(index + offset, value);
+                            new_map.put(index + offset, value.clone());
                             *value_holder = None;
                         }
                     }
@@ -423,9 +423,9 @@ where
     /// assert_eq!(8, map.capacity());
     /// map.enlarge_capacity_to(10);
     /// assert_eq!(10, map.capacity());
-    /// map.put(9, &c); // no reallocation needed
+    /// map.put(9, c); // no reallocation needed
     /// assert_eq!(10, map.capacity());
-    /// map.put(11, &d); // this will trigger reallocation
+    /// map.put(11, d); // this will trigger reallocation
     /// assert_eq!(11, map.capacity());
     /// ```
     pub fn enlarge_capacity_to(&mut self, new_capacity: usize) {
@@ -446,14 +446,14 @@ where
     /// use crate::rust_experiments::utils::umap::*;
     ///
     /// let mut map = UMap::new();
-    /// let id = map.push(&String::from("a"));
+    /// let id = map.push(String::from("a"));
     /// let value = map.get(id);
     /// assert_eq!(Some(String::from("a")), value);
     /// ```
     ///
     /// [`put`]: #method.put
     /// [`enlarge_capacity_to`]: #method.enlarge_capacity_to
-    pub fn push(&mut self, value: &T) -> usize {
+    pub fn push(&mut self, value: T) -> usize {
         let id = self.max + 1;
         self.put(id, value);
         id
@@ -461,7 +461,7 @@ where
 
     pub fn push_all(&mut self, slice: &[T]) -> Vec<usize> {
         self.enlarge_capacity_to(self.capacity() + slice.len());
-        slice.iter().map(|v| self.push(v)).collect()
+        slice.iter().map(|v| self.push(v.clone())).collect()
     }
 
     /// Adds the element with the given id to the map, possibly overwriting the old element
@@ -474,21 +474,21 @@ where
     /// use crate::rust_experiments::utils::umap::*;
     ///
     /// let mut map = UMap::from_slice(&[(1, String::from("a")), (3, String::from("b"))]);
-    /// map.put(2, &String::from("c"));
+    /// map.put(2, String::from("c"));
     /// assert_eq!(map, UMap::from_slice(&[(1, String::from("a")), (2, String::from("c")), (3, String::from("b"))]));
     /// ```
-    pub fn put(&mut self, id: usize, value: &T) {
+    pub fn put(&mut self, id: usize, value: T) {
         match id {
             _ if self.capacity() == 0 => {
                 self.vec = vec![None; INITIAL_CAPACITY];
-                self.vec[0] = Some(value.clone());
+                self.vec[0] = Some(value);
                 self.min = id;
                 self.len += 1;
                 self.max = id;
                 self.offset = id;
             }
             _ if self.is_empty() => {
-                self.vec[0] = Some(value.clone());
+                self.vec[0] = Some(value);
                 self.min = id;
                 self.len = 1;
                 self.max = id;
@@ -496,7 +496,7 @@ where
             }
             _ if id < self.offset => {
                 let mut vec = vec![None; self.max - id + 1];
-                vec[0] = Some(value.clone());
+                vec[0] = Some(value);
                 for i in self.min..=self.max {
                     vec[i - id] = self.get(i);
                 }
@@ -507,12 +507,12 @@ where
             }
             _ if id >= self.offset + self.capacity() => {
                 self.vec.resize(id + 1 - self.offset, None);
-                self.vec[id - self.offset] = Some(value.clone());
+                self.vec[id - self.offset] = Some(value);
                 self.len += 1;
                 self.max = id;
             }
             _ if self.vec[id - self.offset].is_none() => {
-                self.vec[id - self.offset] = Some(value.clone());
+                self.vec[id - self.offset] = Some(value);
                 self.len += 1;
                 if id < self.min {
                     self.min = id
@@ -532,7 +532,7 @@ where
     /// use crate::rust_experiments::utils::umap::*;
     ///
     /// let mut map = UMap::new();
-    /// let id = map.push(&"a");
+    /// let id = map.push("a");
     /// assert!(map.contains(id));
     /// assert_eq!(1, map.len());
     /// ```
@@ -769,13 +769,13 @@ where
     /// let mut map = UMap::new();
     /// assert_eq!(map.min(), None);
     ///
-    /// map.put(2, &String::from("a"));
+    /// map.put(2, "a".to_string());
     /// assert_eq!(map.min(), Some(2));
     ///
-    /// map.put(3, &String::from("b"));
+    /// map.put(3, "b".to_string());
     /// assert_eq!(map.min(), Some(2));
     ///
-    /// map.put(1, &String::from("c"));
+    /// map.put(1, "c".to_string());
     /// assert_eq!(map.min(), Some(1));
     /// ```
     pub fn min(&self) -> Option<usize> {
@@ -794,13 +794,13 @@ where
     /// let mut map = UMap::new();
     /// assert_eq!(map.max(), None);
     ///
-    /// map.put(2, &String::from("a"));
+    /// map.put(2, "a".to_string());
     /// assert_eq!(map.max(), Some(2));
     ///
-    /// map.put(3, &String::from("b"));
+    /// map.put(3, "b".to_string());
     /// assert_eq!(map.max(), Some(3));
     ///
-    /// map.put(1, &String::from("c"));
+    /// map.put(1, "c".to_string());
     /// assert_eq!(map.max(), Some(3));
     /// ```
     pub fn max(&self) -> Option<usize> {
@@ -1135,7 +1135,7 @@ where
         self.iter().any(|(_id, value)| predicate(value))
     }
 
-    /// A utility function making it easier to call `all` on values in the map with identifiers
+    /// A utility method making it easier to call `all` on values in the map with identifiers
     /// belonging to the given `subset`. You could achieve the same by calling [`retrieve`] on
     /// the map with `subset` as the argument, and then `all` on the iterator over the resulting
     /// vector.
@@ -1153,11 +1153,12 @@ where
     ///
     /// [`retrieve`]: #method.retrieve
     pub fn all_in_subset(&self, subset: &USet, predicate: impl Fn(&T) -> bool) -> bool {
-        !self.iter()
+        !self
+            .iter()
             .any(|(id, value)| subset.contains(id) && !predicate(value))
     }
 
-    /// A utility function making it easier to call `any` on values in the map with identifiers
+    /// A utility method making it easier to call `any` on values in the map with identifiers
     /// belonging to the given `subset`. You could achieve the same by calling [`retrieve`] on
     /// the map with `subset` as the argument, and then `any` on the iterator over the resulting
     /// vector.
@@ -1179,20 +1180,77 @@ where
             .any(|(id, value)| subset.contains(id) && predicate(value))
     }
 
-    pub fn remove_all(&mut self, other: &USet) {
-        other.iter().for_each(|id| {
+    /// A utility method for removing all elements with identifiers in `subset` from the map.
+    /// As [`remove`] does not perform reallocation, `remove_all` is equivalent to calling `remove`
+    /// on all identifiers in `subset`. (Contrary to [`put`] and [`put_all`]).
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// use crate::rust_experiments::utils::uset::*;
+    ///
+    /// let mut map = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "ccc".to_string()), (5, "d".to_string()), (11, "ee".to_string())]);
+    /// let set = map.query(|v| { v.len() > 1 });
+    /// map.remove_all(&set);
+    /// assert_eq!(map, UMap::from_slice(&[(4, "b".to_string()),(5, "d".to_string())]))
+    /// ```
+    ///
+    /// [`remove`]: #method.remove
+    /// [`put`]: #method.put
+    /// [`put_all`]: #method.put_all
+    pub fn remove_all(&mut self, subset: &USet) {
+        subset.iter().for_each(|id| {
             self.remove(id);
         });
     }
 
-    pub fn replace(&mut self, id: usize, value: &T) {
+    /// Replaces the value under the identifier `id`.
+    /// If the map does not contain any element with the given identifier, the [`put`] method is called.
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// let mut map = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "ccc".to_string())]);
+    /// map.replace(3, "d".to_string());
+    /// assert_eq!(map, UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "d".to_string())]));
+    ///
+    /// map.replace(5, "e".to_string());
+    /// assert_eq!(map, UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "d".to_string()), (5, "e".to_string())]));
+    /// ```
+    ///
+    /// [`put`]: #method.put
+    pub fn replace(&mut self, id: usize, value: T) {
         if let Some(v) = self.get_ref_mut(id) {
-            *v = value.clone();
+            *v = value;
+        } else {
+            self.put(id, value);
         }
     }
 
-    pub fn replace_all(&mut self, map: &UMap<T>) {
-        map.iter().for_each(|(id, v)| self.replace(id, v));
+    /// Replaces all the values with the common identifiers in the map with the ones from the `other`.
+    /// If the given identifier does not exist in the map, the [`put`] method is called.
+    /// Since we want to preserve the original `other` map, values are cloned.
+    /// You can use this method instead of [`join`] if you are sure that it is not an error that some
+    /// of the elements in both maps have different values under the same identifiers.
+    ///
+    ///
+    /// # Examples
+    /// ```
+    /// use crate::rust_experiments::utils::umap::*;
+    /// let mut map1 = UMap::from_slice(&[(2, "aa".to_string()), (4, "b".to_string()), (3, "ccc".to_string())]);
+    /// let map2 = UMap::from_slice(&[(2, "d".to_string()), (3, "e".to_string())]);
+    /// map1.replace_all(&map2);
+    /// assert_eq!(map1, UMap::from_slice(&[(2, "d".to_string()), (4, "b".to_string()), (3, "e".to_string())]));
+    ///
+    /// let map3 = UMap::from_slice(&[(4, "f".to_string()), (6, "g".to_string())]);
+    /// map1.replace_all(&map3);
+    /// assert_eq!(map1, UMap::from_slice(&[(2, "d".to_string()), (4, "f".to_string()), (3, "e".to_string()), (6, "g".to_string())]));
+    /// ```
+    ///
+    /// [`put`]: #method.put
+    /// [`join`]: #method.join
+    pub fn replace_all(&mut self, other: &UMap<T>) {
+        other.iter().for_each(|(id, v)| self.replace(id, v.clone()));
     }
 }
 
@@ -1291,7 +1349,7 @@ where
 {
     fn extend<T: IntoIterator<Item = (usize, A)>>(&mut self, iter: T) {
         for (id, value) in iter {
-            self.put(id, &value);
+            self.put(id, value);
         }
     }
 }
