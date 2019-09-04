@@ -1353,3 +1353,14 @@ where
         }
     }
 }
+
+impl<A> Extend<A> for UMap<A>
+    where
+        A: Clone + PartialEq,
+{
+    fn extend<T: IntoIterator<Item = A>>(&mut self, iter: T) {
+        for value in iter {
+            self.push(value);
+        }
+    }
+}
